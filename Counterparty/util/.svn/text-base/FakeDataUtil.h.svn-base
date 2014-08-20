@@ -1,0 +1,18 @@
+//
+//  FakeDataUtil.h
+//  CustomTabBar
+//
+//  Created by ori on 12-3-12.
+//  Copyright 2012 onhand. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "City.h"
+
+@interface FakeDataUtil : NSObject {
+
+}
+
++ (NSMutableArray *)buildCityList;
+
+@end

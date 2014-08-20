@@ -1,0 +1,431 @@
+
+#import "Http.h"
+#import "ASIHTTPRequest.h"
+#import "ASINetworkQueue.h"
+#import "JSON.h"
+#import "Error.h"
+#import "Config.h"
+#import "Log.h"
+#import "ResponseData.h"
+#import "StringUtil.h"
+#import "CipherUtil.h"
+#import "DataMgr.h"
+#import "GTMBase64.h"
+
+
+#define kMaxConcurrentOperationCount        1
+#define kHTTPRequestDataType                @"HTTPRequestDataType"
+#define kHTTPRequestDataTypeTag             @"HTTPRequestDataTypeTag"
+#define kHTTPRequestCacheKey                @"CacheKey"
+
+#define kHTTPGetMethod          @"GET"
+#define kHTTPPostMethod         @"POST"
+#define kHTTPPutMethod          @"PUT"
+#define kHTTDeleteMethod        @"DELETE"
+
+#define kHttpTimeOutSeconds     kRequestTimeoutDefault
+
+#define DEFAULT_HTTP_ACTION_TAG    @"0"
+
+@implementation Http
+
+@synthesize httpDelegate;
+@synthesize queue;
+
+
+- (id)init{
+    self = [super init];
+    if (self) {
+    }
+    return self;
+}
+
+- (void)dealloc{
+    
+    [self cancel];
+    [queue release];
+    
+	[super dealloc];
+}
+
+- (void) cancel{
+    NSArray *operations = [self.queue operations];
+    for (id op in operations) {
+        if([op class] == [ASIHTTPRequest class]){
+            //NSLog(@"cancel operation...");
+            ASIHTTPRequest *request = (ASIHTTPRequest *)op;
+            [request clearDelegatesAndCancel];
+        }
+    }
+    [self.queue cancelAllOperations];
+}
+
+
+
+- (NSInteger)requestDataType:(ASIHTTPRequest *)request{
+    NSInteger dataTypeInt = HTTPRequestDataTypeNone;
+    NSString *dataTypeString = [request.requestHeaders objectForKey:kHTTPRequestDataType];
+    if (dataTypeString) {
+        dataTypeInt = [dataTypeString integerValue];
+    }
+    return dataTypeInt;
+}
+
+
+
+//对请求参数进行编码并生成URL参数
+- (NSString *)URLEncodeParameters:(NSArray *)paramsArray stringEncoding:(NSStringEncoding)stringEncoding{
+    if ([paramsArray count]<=0) {
+        return @"";
+    }
+    
+    NSMutableString *urlString = [[NSMutableString alloc] init];
+    NSInteger count = 0;
+    for (NSDictionary *dic in paramsArray) {
+        NSString *paramName = [dic objectForKey:kRequestParamName];
+        NSString *paramValue = [dic objectForKey:kRequestParamValue];
+        
+        if (kDesSwitch) {
+
+            NSLog(@"明文：%@", paramValue);
+            
+            NSData *gtmbase64Data = [GTMBase64 encodeData:[paramValue dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:NO]];
+            NSString *gtmbase64 = [[NSString alloc] initWithData:gtmbase64Data encoding:NSUTF8StringEncoding];
+//            NSLog(@"base64明文：%@", gtmbase64);
+            
+            paramValue = [CipherUtil encryptUseDES:gtmbase64 key:[DataMgr getDesKey]];
+            paramValue = [paramValue stringByReplacingOccurrencesOfString:@"+" withString:@"%2B"];
+//            NSLog(@"密文：%@", paramValue);
+
+        }
+        
+//        NSString *encodeParamValue = [StringUtil urlEncode:paramValue stringEncoding:NSUTF8StringEncoding];
+
+        if (count < [paramsArray count] - 1) {
+            [urlString appendFormat:@"%@=%@&",paramName,paramValue];
+        }
+        else{
+            [urlString appendFormat:@"%@=%@",paramName,paramValue];
+        }
+        
+        count ++;
+    }
+    
+    return [urlString autorelease];
+}
+
+
+
+
+- (NSString *)getApiUrlByActionType:(DataType)dataType {
+    NSString *actionName = @"";
+    switch (dataType) {
+        /* --------本地优惠-------- */                
+        case DataTypeGetTuijianList:
+            actionName = @"getCommendActivityList.action";
+            break;
+        case DataTypeGetAreaList:
+            actionName = @"getAreaList.action";
+            break;
+        case DataTypeGetAreaAndTypeList:
+            actionName = @"getAreaAndTypeList.action";
+            break;
+        case DataTypeGetMerchantListByAreaAndType:
+            actionName = @"getMerchantListByAreaAndType.action";
+            break;
+        case DataTypeGetMerchantDetail:
+            actionName = @"getMerchantDetail.action";
+            break;
+        case DataTypeGetMerchantList:
+            actionName = @"getMerchantChild.action";
+            break;
+        case DataTypeGetMerchantCouponList:
+            actionName = @"getMerchantCouponList.action";
+            break;
+        case DataTypeGetCouponDetail:
+            actionName = @"getCouponDetail.action";
+            break;
+        case DataTypeGetAllBrands:
+            actionName = @"getAllBrands.action";
+            break;
+        case DataTypeGetBrandById:
+            actionName = @"getBrandById.action";
+            break;
+        case DataTypeSearch:
+            actionName = @"search.action";
+            break;
+            
+        /* --------附近-------- */    
+        case DataTypeGetLBSMerchantList:
+            actionName = @"getNearMerchant.action";
+            break;
+            
+        /* --------vip特权-------- */    
+        case DataTypeGetLimitList:
+            actionName = @"getLimitList.action";
+            break;
+        case DataTypeGetLimitById:
+            actionName = @"getLimitById.action";
+            break;
+        case DataTypeLimitApply:
+            actionName = @"limitApply.action";
+            break;
+        case DataTypeLimit:
+            actionName = @"limit.action";
+            break;
+        case DataTypeGetCouponInfoList:
+            actionName = @"getCoupons.action";
+            break;
+        case DataTypeGetCouponInfoDetail:
+            actionName = @"getCouponInfoDetail.action";
+            break;
+        case DataTypeDownCouponInfo:
+            actionName = @"downloadCoupon.action";
+            break;
+        case DataTypeGetGiftList:
+            actionName = @"getTesters.action";
+            break;
+        case DataTypeGetGiftDetail:
+            actionName = @"getTesterDetail.action";
+            break;
+        case DataTypeGift:
+            actionName = @"tester.action";
+            break;
+        /* --------我的爱尚-------- */    
+        case DataTypeUserLogin:
+            actionName = @"userLogin.action";
+            break;
+        case DataTypeGetRegCode:
+            actionName = @"getRegCode.action";
+            break;
+        case DataTypeUserReg:
+            actionName = @"userReg.action";
+            break;
+        case DataTypeGetBackPwd1:
+            actionName = @"getBackPwd1.action";
+            break;
+        case DataTypeGetBackPwd2:
+            actionName = @"getBackPwd2.action";
+            break;
+        case DataTypeUpDatePwd:
+            actionName = @"updatePwd.action";//修改密码
+            break;
+        case DataTypeGetLimistListByUser:
+            actionName = @"getLimistListByUser.action";
+            break;
+        case DataTypeGetCouponListByUser:
+            actionName = @"getCouponListByUser.action";
+            break;
+        case DataTypeGetGiftListByUser:
+            actionName = @"getTestListByUser.action";
+            break;
+        case DataTypeEditAndDeleteAddress:
+        case DataTypeAddressList:
+        case DataTypeAddressDelete:
+        case DataTypeAddressAdd:
+        case DataTypeAddressUpdate:
+            actionName = @"editAndDeleteAddress.action";
+            break;
+        case DataTypeSendFeedback:
+            actionName = @"getFeedBack.action";
+            break;
+        case DataTypeGetFeedbackList:
+            actionName = @"getFeedBackList.action";
+            break;
+        case DataTypeCheckVersion:
+            actionName = @"checkVersion.action";
+            break;
+        case DataTypeAddPhone:
+            actionName = @"addPhone.action";
+            break;
+        case DataTypeAddToken:
+            actionName = @"addToken.action";
+            break;
+        case DataTypePushResponse:
+            actionName = @"pushResponse.action";
+            break;
+        case DataTypeUserSignIn:
+            actionName = @"userSignIn.action";
+            break;
+        case DataTypeGetUserIntegralItem:
+            actionName = @"getUserIntegralItem.action";
+            break;
+        case DataTypeGetIntegralHelp:
+            actionName = @"getIntegralHelp.action";
+            break;
+        case DataTypeMagSubscription:
+            actionName = @"magSubscription.action";
+            break;
+        case DataTypeAddAttention:
+            actionName = @"attentionMAndB.action";
+            break;
+        case DataTypeCancelAttention:
+            actionName = @"cancelAttentionMAndB.action";
+            break;
+        case DataTypeGetAttentionList:
+            actionName = @"getAttentionList.action";
+            break;
+            
+        case DataTypeGetKey:
+            actionName = @"getKey.action";
+            break;
+        case DataTypeLogout:
+            actionName = @"userLogout.action";
+            break;
+        case DataTypeAttentionCouponList:
+            actionName = @"attentionCouponList.action";
+            break;
+        case DataTypeGetPassbook:
+            actionName = @"addPassBook.action";
+            break;
+        default:
+            break;
+    }
+    NSString *api = [NSString stringWithFormat:@"%@%@", kDefaultApiUrl, actionName];
+    return api;
+}
+
+
+//获取http method的类型
+- (NSString *)methodTypeName:(DataType)actionType {
+    return kHTTPPostMethod;
+}
+
+
+- (void)httpAction:(NSArray *)params actionType:(DataType)actionType{
+    [self httpAction:params actionType:actionType actionWithTag:DEFAULT_HTTP_ACTION_TAG];
+}
+
+
+/* --------发送http请求-------- */
+- (void)httpAction:(NSArray *)params actionType:(DataType)actionType actionWithTag:(NSString *)tag{
+   
+	NSString *serverApiUrl = kDefaultApiUrl;
+    
+    serverApiUrl = [self getApiUrlByActionType:actionType];
+
+    NSString *httpMethodName = [self methodTypeName:actionType];
+    
+	NSString *encodeParams = [self URLEncodeParameters:params stringEncoding:NSUTF8StringEncoding];
+    
+    NSNumber *dataType = [NSNumber numberWithInteger:actionType];
+
+    ASIHTTPRequest *request = nil;
+    if ([httpMethodName isEqualToString:kHTTPPostMethod]) {
+        request = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:serverApiUrl]];
+
+		[request addRequestHeader: @"User-Agent" value:@"Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; InfoPath.2)" ];
+		[request addRequestHeader: @"Content-Type" value:@"application/x-www-form-urlencoded"];
+		[request addRequestHeader: @"Accept-Encoding" value:@"gzip,deflate"];
+		[request addRequestHeader: @"Accept-Charset" value:@"utf-8"];
+		
+		
+        NSString *strBody = [NSString stringWithFormat:@"%@",encodeParams];
+        NSData *postData = [strBody dataUsingEncoding:NSUTF8StringEncoding];
+        NSMutableData *mData = [NSMutableData dataWithData:postData];
+        
+        [request setPostBody:mData];
+		
+#if kShowRequestURL
+        Log(@"<==============POST:%@?===============>\r\n%@", serverApiUrl, strBody);
+#endif
+    }
+    else{
+        NSString *strUrl = [NSString stringWithFormat:@"%@?%@",serverApiUrl,encodeParams];
+        request = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:strUrl]];
+#if kShowRequestURL
+        Log(@"GET:%@", strUrl);
+#endif
+    }
+    [request addRequestHeader:kHTTPRequestDataTypeTag value:tag];
+    [request setTimeOutSeconds:kHttpTimeOutSeconds];
+    [request setDelegate:self];
+    [request setDidFinishSelector:@selector(requestFinished:)];
+    [request setDidFailSelector:@selector(requestFailed:)];
+    [request setRequestMethod:httpMethodName];
+    NSDictionary *userInfo = [NSDictionary
+                              dictionaryWithObjects:[NSArray
+                                                     arrayWithObjects:dataType,
+                                                     tag,nil]
+                              forKeys:[NSArray
+                                       arrayWithObjects:kHTTPRequestDataType,
+                                       kHTTPRequestDataTypeTag,nil]];
+    [request setUserInfo:userInfo];
+    //[request startAsynchronous];
+    
+    if ([self queue] == nil) {
+        queue = [[NSOperationQueue alloc] init];
+        self.queue.maxConcurrentOperationCount = kMaxConcurrentOperationCount;
+    }
+    [[self queue] addOperation:request]; //queue is an NSOperationQueue
+}
+
+/* --------单个请求完成-------- */
+- (void)requestFinished:(ASIHTTPRequest *)request
+{
+    NSMutableString *responseString = [NSMutableString stringWithFormat:@"%@",[request responseString]];
+    
+    if (kDesSwitch) {
+        NSLog(@"\n返回密文：%@", responseString);        
+        NSString *reBase64 = [CipherUtil decryptWithText:responseString];
+//        NSLog(@"base64解密后明文：%@", reBase64);
+        
+        NSData *reBase64Data = [GTMBase64 decodeString:reBase64];
+        NSString *reOri = [[[NSString alloc] initWithData:reBase64Data encoding:NSUTF8StringEncoding] autorelease];
+        responseString = [NSMutableString stringWithString:reOri];
+
+    }
+    
+#if kShowResponseText
+	Log(@"<=============response:==============>\r\n%@", responseString);
+#endif
+	
+    [responseString replaceOccurrencesOfString:@"\t" withString:@"  " options:NSCaseInsensitiveSearch range:NSMakeRange(0,[responseString length])];
+    
+    
+//    ResponseData * responseData = [[[ResponseData alloc] init] autorelease];
+    ResponseData * responseData = [[ResponseData alloc] init];
+    NSDictionary *userInfo = request.userInfo;
+    NSNumber *dataType = [userInfo objectForKey:kHTTPRequestDataType];
+    NSString *requestTag = [userInfo objectForKey:kHTTPRequestDataTypeTag];
+    responseData.tag = requestTag;
+    responseData.dataType = [dataType intValue];
+//    responseData.data = responseString;
+    if (responseData.dataType == DataTypeGetPassbook) {
+        responseData.data = request.responseData;
+    }
+
+    responseData.responseString = responseString;
+	
+    [httpDelegate requestFinished:responseData];
+}
+
+
+
+/* --------请求失败-------- */
+- (void)requestFailed:(ASIHTTPRequest *)request
+{
+#if kShowResponseText
+	NSMutableString *responseString = [NSMutableString stringWithFormat:@"%@",[request responseString]];
+	Log(@"<=============response failed:==============>\r\n%@", responseString);
+#endif
+	
+	NSError *err = [request error];
+    NSDictionary *userInfo = request.userInfo;
+    NSNumber *dataType = [userInfo objectForKey:kHTTPRequestDataType];
+    //NSString *requestTag = [userInfo objectForKey:kHTTPRequestDataTypeTag];
+    Error *error = [[[Error alloc] init] autorelease];
+    if (err) {
+        error.no = HXERROR_HTTPFAIL;
+        error.message = @"网络错误";
+    }
+    else{
+        error.no = HXERROR_UNKNOWN;
+        error.message = @"未知错误";
+    }
+    error.dataType = [dataType intValue];
+    [httpDelegate requestFailed:error];
+}
+
+
+@end

@@ -1,0 +1,187 @@
+
+#import <CoreData/CoreData.h>
+#import "Http.h"
+#import "Error.h"
+
+@protocol DalDelegate <NSObject>
+
+@optional
+- (void)responseDataFromServer:(ResponseData *)dataModel;
+- (void)responseDataFailed:(Error *)error;
+
+@end
+
+@interface Dal : NSObject<HttpDelegate> {
+    @private
+        Http *_http;
+        id<DalDelegate> _dalDelegate;
+        
+    @public
+        Error *_error;
+}
+
+@property (nonatomic, retain) Error *error;
+@property (nonatomic, assign) id<DalDelegate> dalDelegate;
+@property (nonatomic, retain) NSString *userId;
+@property (nonatomic, retain, readonly) NSManagedObjectContext *managedObjectContext;
+
+- (void) cancel;
+- (NSString *)generatePostText:(NSString *)cmd argsArray:(NSMutableArray *)argsArray;
+
+#pragma mark -本地优惠 (9)
+- (void)getTuijianList:(int)beginPage pageSize:(int)pageSize;
+
+//获取商圈列表
+- (void)getAreaList;
+
+//获取区列表和类型（商场类型，品牌类型）列表
+- (void)getAreaAndTypeList;
+
+//获取商场列表 areaId:商圈编号  merchantTypeId:商场类型编号  orderType:排序方式0默认（最大活动时间）1人气，2拥有优惠量 
+- (void)getMerchantListByAreaAndType:(NSString *)areaId merchantTypeId:(NSString *)merchantTypeId orderType:(int)orderType beginPage:(int)beginPage pageSize:(int)pageSize;
+
+//根据商场编号得到商场详情
+- (void)getMerchantDetail:(NSString *)merchantId couponType:(NSString *)couponType beginPage:(int)beginPage;
+
+//获取分店类表
+- (void)getMerchantList:(NSString *)ChainId beginPage:(int)beginPage pageSize:(int)pageSize;
+
+
+//商场内的全场活动列表
+- (void)getMerchantCouponList:(NSString *)merchantId;
+
+//商场内的全场活动的详情 couponId:活动编号  couponType:活动类型：0商场，1品牌，2抱团秒，3优惠券，4积分兑换
+- (void)getCouponDetail:(NSString *)couponId couponType:(int)couponType;
+
+//根据品牌类型来筛选并按照排序方式来排序
+- (void)getAllBrands:(NSString *)type orderType:(int)orderType beginPage:(int)beginPage pageSize:(int)pageSize;
+
+//品牌详情
+- (void)getBrandById:(NSString *)brandId couponType:(NSString *)couponType beginPage:(int)beginPage pageSize:(int)pageSize;
+
+//搜索（商场或品牌）
+- (void)search:(NSString *)keyword searchType:(int)searchType beginPage:(int)beginPage pageSize:(int)pageSize;
+
+
+
+#pragma mark -附近 (1)
+//根据距离和类型筛选商场信息
+- (void)getLBSMerchantList:(NSString *)range typeId:(NSString *)typeId lat:(float)lat lon:(float)lon beginPage:(int)beginPage pageSize:(int)pageSize;
+
+
+
+#pragma mark -vip特权 (10)
+//抱团秒列表页
+- (void)getLimitList:(int)beginPage pageSize:(int)pageSize;
+
+//抱团秒详情页
+- (void)getLimitById:(NSString *)limitId;
+
+//抱团秒报名
+- (void)limitApply:(NSString *)limitId uid:(NSString *)uid;
+
+//秒杀
+- (void)limit:(NSString *)limitId uid:(NSString *)uid;
+
+//优惠券列表
+- (void)getCouponInfoList:(int)beginPage pageSize:(int)pageSize;
+
+//优惠券详情
+- (void)getCouponInfoDetail:(NSString *)couponId lat:(float) lat lon:(float)lon;
+
+//优惠券下载
+- (void)downCouponInfo:(NSString *)couponId phone:(NSString *)phone;
+
+//积分兑换列表
+- (void)getGiftList:(int)beginPage pageSize:(int)pageSize;
+
+//积分兑换详情页
+- (void)getGiftDetail:(NSString *)giftId;
+
+//积分兑换
+- (void)gift:(NSString *)giftId uid:(NSString *)uid;
+
+
+
+#pragma mark -我的爱尚 (12)
+//登录
+- (void)userLogin:(NSString *)username password:(NSString *)password;
+
+//发送验证码
+- (void)getRegCode:(NSString *)phone;
+
+//注册
+- (void)userReg:(NSString *)regCode password:(NSString *)password;
+- (void)userReg:(NSString *)regCode password:(NSString *)password inviteCode:(NSString *)inviteCode;
+
+//找回密码获取验证码
+- (void)getBackPwd1:(NSString *)phone;
+
+//修改重置
+- (void)getBackPwd2:(NSString *)pwcode password:(NSString *)password;
+//修改密码
+-(void)updatePwd:(NSString *)old_pwd new_pwd:(NSString *)new_pwd;
+//抱团秒历史记录
+- (void)getLimistListByUser:(int)beginPage pageSize:(int)pageSize;
+
+//优惠券历史记录
+- (void)getCouponListByUser:(int)beginPage pageSize:(int)pageSize;
+
+//积分兑换历史记录
+- (void)getGiftListByUser:(int)beginPage pageSize:(int)pageSize;
+
+//编辑地址(新增，修改，删除)
+- (void)editAndDeleteAddress:(NSString *)addressId da:(NSString *)da pc:(NSString *)pc pn:(NSString *)pn cc:(NSString *)cc cn:(NSString *)cn address:(NSString *)address name:(NSString *)name mobile:(NSString *)mobile tel:(NSString *)tel postCode:(NSString *)postCode;
+
+//意见反馈提交
+- (void)sendFeedback:(NSString *)feedback;
+
+//意见反馈查看
+- (void)getFeedbackList:(int)beginPage pageSize:(int)pageSize;
+
+//检查更新
+- (void)checkVersion:(NSString *)version;
+
+//绑定手机号
+- (void)addPhone:(NSString *)phone regCode:(NSString *)regCode email:(NSString *)email;
+
+//10.1添加Token
+- (void)addToken:(NSString *)token;
+
+//10.4用户针对推送的响应：
+- (void)pushResponse:(NSString *)pushId responseType:(NSString *)responseType itemType:(NSString *)itemType;
+
+//7.18签到
+- (void)userSignIn:(NSString *)uid mapX:(double)mapX mapY:(double)mapY;
+
+//7.19 获取积分交易记录
+- (void)getUserIntegralItem:(NSString *)uid page:(int)beginPage;
+
+//7.20 获取积分帮助
+- (void)getIntegralHelp;
+
+- (void)magSubscription:(int)magaType state:(int)state email:(NSString *)email name:(NSString *)name phone:(NSString *)phone address:(NSString *)address;
+
+- (void)getKey;
+
+//商场/品牌关注
+- (void)addAttention:(int)type aid:(NSString *)aid;
+
+//7.22 商场/品牌取消关注
+- (void)cancelAttention:(int)type aid:(NSString *)aid;
+
+//7.23 获取关注列表
+- (void)getAttentionList:(int)type page:(int)beginPage;
+
+//注销
+- (void)logout:(NSString *)uid;
+
+//获取当前关注的活动列表
+- (void)attentionCouponList:(NSString *)uid;
+
+
+//6.14优惠券添加passbook。
+- (void)getPassbook:(NSString *)couponId phone:(NSString *)phone;
+
+
+@end

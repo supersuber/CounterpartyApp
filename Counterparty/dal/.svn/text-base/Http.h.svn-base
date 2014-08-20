@@ -1,0 +1,52 @@
+
+#import "Error.h"
+#import "ResponseData.h"
+#import "HttpRequestURL.h"
+#import "DataCache.h"
+#import <Foundation/Foundation.h>
+
+@protocol HttpDelegate <NSObject>
+
+@optional
+- (void)requestFinished:(ResponseData *)dataModel;
+- (void)requestFailed:(Error *)error;
+
+@end
+
+#define kRequestParamName           @"ParamName"
+#define kRequestParamValue          @"ParamValue"
+
+#define kShowRequestURL             1
+#define kShowResponseText           1
+
+@class ASIHTTPRequest;
+@class ASINetworkQueue;
+
+@interface Http : NSObject{
+    NSOperationQueue *queue;
+    
+    id<HttpDelegate> httpDelegate;
+}
+
+@property (nonatomic, assign) id<HttpDelegate> httpDelegate;
+@property (nonatomic, retain) NSOperationQueue *queue;
+
+- (void) cancel;
+
+
+//对请求参数进行编码并生成URL参数
+- (NSString *)URLEncodeParameters:(NSArray *)paramsArray stringEncoding:(NSStringEncoding)stringEncoding;
+
+//获取http请求的业务类型
+- (NSInteger)requestDataType:(ASIHTTPRequest *)request;
+
+//获取method的类型
+- (NSString *)methodTypeName:(DataType)actionType;
+
+
+//网络请求统一入口
+//params:参数数组 actionType:接口数据类型
+- (void)httpAction:(NSArray *)params actionType:(DataType)actionType;
+- (void)httpAction:(NSArray *)params actionType:(DataType)actionType actionWithTag:(NSString *)tag;
+
+@end

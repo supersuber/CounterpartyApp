@@ -1,0 +1,754 @@
+//
+//  DataParser.m
+//  CustomTabBar
+//
+//  Created by ori on 12-3-16.
+//  Copyright 2012 onhand. All rights reserved.
+//
+
+#import "DataParser.h"
+#import "JSON.h"
+#import "Tuijian.h"
+#import "Brand.h"
+#import "Seckill.h"
+#import "Coupon.h"
+#import "Gift.h"
+#import "CouponDetail.h"
+#import "ActivityDetail.h"
+#import "GiftDetail.h"
+#import "SeckillDetail.h"
+#import "AreaAndTypeInfo.h"
+#import "MerchantDetail.h"
+#import "BrandDetail.h"
+#import "SearchInfo.h"
+#import "User.h"
+#import "Feedback.h"
+#import "Version.h"
+#import "LimitApplyInfo.h"
+#import "IntegralRecord.h"
+#import "Attention.h"
+
+
+@implementation DataParser
+
++ (ResponseData *)parse:(ResponseData *)data {
+    if (data.dataType == DataTypeGetPassbook) {
+        return data;
+    }
+    NSDictionary *jsonDictionary = [data.responseString JSONValue];
+    if (jsonDictionary == nil) {
+        data.data = nil;
+        data.res = @"1";
+        data.resText = @"数据错误";
+        return data;
+    }
+    NSDictionary *favourDictionary = [jsonDictionary objectForKey:@"FAVOUR"];
+    data.res = [favourDictionary objectForKey:@"res"];
+    data.resText = [favourDictionary objectForKey:@"resText"];
+    data.cmd = [favourDictionary objectForKey:@"cmd"];
+    
+    data.page = [jsonDictionary objectForKey:@"PAGE"];
+    data.totalPage = [jsonDictionary objectForKey:@"TOTALPAGE"];
+    
+    data.MYPOS = [jsonDictionary objectForKey:@"MYPOS"];
+    
+    data.REG_CODE = [jsonDictionary objectForKey:@"REG_CODE"];
+    data.pwCode = [jsonDictionary objectForKey:@"pwCode"];
+    data.integral = [jsonDictionary objectForKey:@"INTEGRAL"];
+    data.integralHelp = [jsonDictionary objectForKey:@"INTEGRAL_HELP"];
+        
+//    NSLog(@"---------res=%@, resText=%@, code=%@, page=%@, totalPage=%@", data.res, data.resText, data.REG_CODE, data.page, data.totalPage);
+
+	switch (data.dataType) {
+        /* ----------本地优惠--------- */
+        case DataTypeGetTuijianList :
+            data.data = [DataParser parseGetTuijianList:jsonDictionary];
+            break;
+        case DataTypeGetAreaList :
+            data.data = [DataParser parseGetAreaList:jsonDictionary];
+            break;
+        case DataTypeGetAreaAndTypeList :
+            data.data = [DataParser parseGetAreaAndTypeList:jsonDictionary];
+            break;
+        case DataTypeGetMerchantListByAreaAndType :
+        case DataTypeGetMerchantList :            
+            data.data = [DataParser parseGetMerchantListByAreaAndType:jsonDictionary];
+            break;
+        case DataTypeGetMerchantDetail :
+            data.data = [DataParser parseGetMerchantDetail:jsonDictionary];
+            break;
+        case DataTypeGetMerchantCouponList :
+            data.data = [DataParser parseGetMerchantCouponList:jsonDictionary];
+            break;
+        case DataTypeGetCouponDetail :
+            data.data = [DataParser parseGetCouponDetail:jsonDictionary];
+            break;
+        case DataTypeGetAllBrands :
+            data.data = [DataParser parseGetAllBrands:jsonDictionary];
+            break;
+        case DataTypeGetBrandById :
+            data.data = [DataParser parseGetBrandById:jsonDictionary];
+            break;
+        case DataTypeSearch :
+            data.data = [DataParser parseSearch:jsonDictionary];
+            break;
+
+        /* --------附近-------- */    
+        case DataTypeGetLBSMerchantList:
+            data.data = [DataParser parseGetLBSMerchantList:jsonDictionary];
+            break;
+
+        /* ----------vip特权--------- */
+        case DataTypeGetLimitList :
+            data.data = [DataParser parseGetLimitList:jsonDictionary];
+            break;
+        case DataTypeGetLimitById:
+            data.data = [DataParser parseGetLimitById:jsonDictionary];
+            break;
+        case DataTypeLimitApply:
+            data.data = [DataParser parseLimitApply:jsonDictionary];
+            break;
+        case DataTypeLimit:
+            data.data = [DataParser parseLimit:jsonDictionary];
+            break;
+        case DataTypeGetCouponInfoList:
+            data.data = [DataParser parseGetCouponInfoList:jsonDictionary];
+            break;
+        case DataTypeGetCouponInfoDetail:
+            data.data = [DataParser parseGetCouponInfoDetail:jsonDictionary];
+            break;
+        case DataTypeDownCouponInfo:
+            data.data = [DataParser parseDownCouponInfo:jsonDictionary];
+            break;
+        case DataTypeGetGiftList:
+            data.data = [DataParser parseGetGiftList:jsonDictionary];
+            break;
+        case DataTypeGetGiftDetail:
+            data.data = [DataParser parseGetGiftDetail:jsonDictionary];
+            break;
+        case DataTypeGift:
+            data.data = [DataParser parseGift:jsonDictionary];
+            break;
+            /* --------我的爱尚-------- */    
+        case DataTypeUserLogin:
+            data.data = [DataParser parseUserLogin:jsonDictionary];
+            break;
+        case DataTypeGetRegCode:
+            data.data = [DataParser parseGetRegCode:jsonDictionary];
+            break;
+        case DataTypeUserReg:
+            data.data = [DataParser parseUserReg:jsonDictionary];
+            break;
+        case DataTypeGetBackPwd1:
+            data.data = [DataParser parseGetBackPwd1:jsonDictionary];
+            break;
+        case DataTypeGetBackPwd2:
+            data.data = [DataParser parseGetBackPwd2:jsonDictionary];
+            break;
+        case DataTypeGetLimistListByUser:
+            data.data = [DataParser parseGetLimistListByUser:jsonDictionary];
+            break;
+        case DataTypeGetCouponListByUser:
+            data.data = [DataParser parseGetCouponListByUser:jsonDictionary];
+            break;
+        case DataTypeGetGiftListByUser:
+            data.data = [DataParser parseGetGiftListByUser:jsonDictionary];
+            break;
+        case DataTypeEditAndDeleteAddress:
+        case DataTypeAddressList:
+        case DataTypeAddressDelete:
+        case DataTypeAddressAdd:
+        case DataTypeAddressUpdate:
+            data.data = [DataParser parseEditAndDeleteAddress:jsonDictionary];
+            break;
+        case DataTypeSendFeedback:
+            data.data = [DataParser parseSendFeedback:jsonDictionary];
+            break;
+        case DataTypeGetFeedbackList:
+            data.data = [DataParser parseGetFeedbackList:jsonDictionary];
+            break;
+        case DataTypeCheckVersion:
+            data.data = [DataParser parseCheckVersion:jsonDictionary];
+            break;
+        case DataTypeGetUserIntegralItem:
+            data.data = [DataParser parseGetUserIntegralItem:jsonDictionary];
+            break;
+        case DataTypeGetAttentionList:
+            data.data = [DataParser parseGetAttentionList:jsonDictionary];
+            break;
+        case DataTypeAttentionCouponList:
+            data.data = [DataParser parseAttentionCouponList:jsonDictionary];
+            break;
+  
+		default:
+			break;
+	}
+	return data;
+}
+
+#pragma mark- 本地优惠
++ (id)parseGetTuijianList:(NSDictionary *)jsonDictionary {
+    NSDictionary *tuijianDictionary = [jsonDictionary objectForKey:@"TUIJIANLIST"];
+    if (tuijianDictionary == nil || tuijianDictionary == [NSNull null]) {
+        return nil;
+    }
+    NSMutableArray *tuijianList = [[NSMutableArray alloc] initWithCapacity:[tuijianDictionary count]];
+    for (NSDictionary *dict in tuijianDictionary) {
+        Tuijian *tuijian = [[Tuijian alloc] initWithDictionary:dict];
+        [tuijianList addObject:tuijian];
+        [tuijian autorelease];
+    }
+    return [tuijianList autorelease];
+}
+
++ (id)parseGetAreaList:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseGetAreaAndTypeList:(NSDictionary *)jsonDictionary {
+    AreaAndTypeInfo *info = [[AreaAndTypeInfo alloc] init];
+    NSDictionary *areaDictionary = [jsonDictionary objectForKey:@"AREALIST"];
+    if (areaDictionary != nil && areaDictionary != [NSNull null]) {
+        NSMutableArray *areaList = [[NSMutableArray alloc] initWithCapacity:[areaDictionary count]];
+        for (NSDictionary *dict in areaDictionary) {
+            Area *area = [[Area alloc] initWithDictionary:dict];
+            [areaList addObject:area];
+            [area autorelease];
+        }
+        info.areaArray = areaList;
+        [areaList release];
+    }
+    NSDictionary *typeDictionary = [jsonDictionary objectForKey:@"TYPELIST"];
+    if (typeDictionary != nil && typeDictionary != [NSNull null]) {
+        NSMutableArray *typeList = [[NSMutableArray alloc] initWithCapacity:[typeDictionary count]];
+        for (NSDictionary *dict in typeDictionary) {
+            Type *type = [[Type alloc] initWithDictionary:dict];
+            [typeList addObject:type];
+            [type autorelease];
+        }
+        info.typeArray = typeList;
+        [typeList release];
+    }
+
+    return [info autorelease];
+
+}
+
++ (id)parseGetMerchantListByAreaAndType:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"MERCHANTLIST"];
+    if (dictionary == nil || dictionary == [NSNull null]) {
+        return nil;
+    }
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Merchant *merchant = [[Merchant alloc] initWithDictionary:dict];
+        [list addObject:merchant];
+        [merchant autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseGetMerchantDetail:(NSDictionary *)jsonDictionary {
+    MerchantDetail *merchantDetail = [[MerchantDetail alloc] init];
+    NSDictionary *merchantDictionary = [jsonDictionary objectForKey:@"MERCHANTINFO"];
+    if (merchantDictionary != nil && merchantDictionary != [NSNull null]) {
+        Merchant *merchant = [[Merchant alloc] initWithDictionary:merchantDictionary];
+        merchantDetail.merchant = merchant;
+        [merchant release];
+    }
+    NSDictionary *couponDictionary = [jsonDictionary objectForKey:@"COUPONINFO"];
+    if (couponDictionary != nil && couponDictionary != [NSNull null]) {
+        Coupon *coupon = [[Coupon alloc] initWithDictionary:couponDictionary];
+        merchantDetail.coupon = coupon;
+        [coupon release];
+    }
+
+    
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"COUPONLIST"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+        for (NSDictionary *dict in dictionary) {
+            Activity *add = [[Activity alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        merchantDetail.activityArray = list;
+        [list release];
+    }
+    return [merchantDetail autorelease];
+
+}
+
++ (id)parseGetMerchantCouponList:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseGetCouponDetail:(NSDictionary *)jsonDictionary {
+    ActivityDetail *activityDetail = [[ActivityDetail alloc] init];
+    NSDictionary *activityDictionary = [jsonDictionary objectForKey:@"COUPONINFO"];
+    if (activityDictionary != nil && activityDictionary != [NSNull null]) {
+        Activity *activity = [[Activity alloc] initWithDictionary:activityDictionary];
+        activityDetail.activity = activity;
+        [activity release];
+    }
+    
+    
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"MERCHANTLIST"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+        for (NSDictionary *dict in dictionary) {
+            Merchant *add = [[Merchant alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        activityDetail.merchantArray = list;
+        [list release];
+    }
+    
+    NSDictionary *brandDictionary = [jsonDictionary objectForKey:@"BRANDLIST"];
+    if (brandDictionary != nil && brandDictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[brandDictionary count]];
+        for (NSDictionary *dict in brandDictionary) {
+            Brand *add = [[Brand alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        activityDetail.brandArray = list;
+        [list release];
+    }
+
+    
+    return [activityDetail autorelease];
+}
+
++ (id)parseGetAllBrands:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"BRANDS"];
+    if (dictionary == nil || dictionary == [NSNull null]) {
+        return nil;
+    }
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Brand *brand = [[Brand alloc] initWithDictionary:dict];
+        [list addObject:brand];
+        [brand autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseGetBrandById:(NSDictionary *)jsonDictionary {
+    BrandDetail *brandDetail = [[BrandDetail alloc] init];
+    NSDictionary *brandDictionary = [jsonDictionary objectForKey:@"BRANDINFO"];
+    if (brandDictionary != nil && brandDictionary != [NSNull null]) {
+        Brand *brand = [[Brand alloc] initWithDictionary:brandDictionary];
+        brandDetail.brand = brand;
+        [brand release];
+    }
+    NSDictionary *couponDictionary = [jsonDictionary objectForKey:@"COUPONINFO"];
+    if (couponDictionary != nil && couponDictionary != [NSNull null]) {
+        Coupon *coupon = [[Coupon alloc] initWithDictionary:couponDictionary];
+        brandDetail.coupon = coupon;
+        [coupon release];
+    }
+    
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"COUPONLIST"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+        for (NSDictionary *dict in dictionary) {
+            Activity *add = [[Activity alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        brandDetail.activityArray = list;
+        [list release];
+    }
+    return [brandDetail autorelease];
+
+}
+
++ (id)parseSearch:(NSDictionary *)jsonDictionary {
+    SearchInfo *searchInfo = [[SearchInfo alloc] init];
+    
+    NSDictionary *merchantDictionary = [jsonDictionary objectForKey:@"MERCHANTLIST"];
+    if (merchantDictionary != nil && merchantDictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[merchantDictionary count]];
+        for (NSDictionary *dict in merchantDictionary) {
+            Merchant *add = [[Merchant alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        searchInfo.merchantArray = list;
+        [list release];
+    }
+    
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"BRANDLIST"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+        for (NSDictionary *dict in dictionary) {
+            Brand *add = [[Brand alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        searchInfo.brandArray = list;
+        [list release];
+    }
+    
+    searchInfo.keyword = [jsonDictionary objectForKey:@"KEYWORD"];
+    searchInfo.searchType = [jsonDictionary objectForKey:@"SERACHTYPE"];
+    
+    return [searchInfo autorelease];
+
+}
+
+#pragma mark- 附近
++ (id)parseGetLBSMerchantList:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"MERCHANTLIST"];
+    if (dictionary == nil || dictionary == [NSNull null]) {
+        return nil;
+    }
+
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Merchant *merchant = [[Merchant alloc] initWithDictionary:dict];
+        [list addObject:merchant];
+        [merchant autorelease];
+    }
+    return [list autorelease];
+
+}
+
+
+
+#pragma mark- vip特权
++ (id)parseGetLimitList:(NSDictionary *)jsonDictionary {
+    NSDictionary *limitDictionary = [jsonDictionary objectForKey:@"LIMITLIST"];
+    if (limitDictionary == nil || limitDictionary == [NSNull null]) {
+        return nil;
+    }
+    NSMutableArray *limitList = [[NSMutableArray alloc] initWithCapacity:[limitDictionary count]];
+    for (NSDictionary *dict in limitDictionary) {
+        Seckill *seckill = [[Seckill alloc] initWithDictionary:dict];
+        [limitList addObject:seckill];
+        [seckill autorelease];
+    }
+    return [limitList autorelease];
+}
+
++ (id)parseGetLimitById:(NSDictionary *)jsonDictionary {
+    SeckillDetail *seckillDetail = [[SeckillDetail alloc] init];
+    
+    NSDictionary *seckillDictionary = [jsonDictionary objectForKey:@"LIMITINFO"];
+    if (seckillDictionary != nil && seckillDictionary != [NSNull null]) {
+        Seckill *seckill = [[Seckill alloc] initWithDictionary:seckillDictionary];
+        seckillDetail.seckill = seckill;
+        [seckill release];
+    }
+
+    
+    NSDictionary *questionDictionary = [jsonDictionary objectForKey:@"QUESTIONINFO"];
+    if (questionDictionary != nil && questionDictionary != [NSNull null]) {
+        Question *question = [[Question alloc] initWithDictionary:questionDictionary];
+        seckillDetail.question = question;
+        [question release];
+    }
+    
+    NSDictionary *tipDictionary = [jsonDictionary objectForKey:@"TIPINFO"];
+    if (tipDictionary != nil && tipDictionary != [NSNull null]) {
+        Tip *tip = [[Tip alloc] initWithDictionary:tipDictionary];
+        seckillDetail.tip = tip;
+        [tip release];
+    }
+    
+    NSDictionary *applyDictionary = [jsonDictionary objectForKey:@"LIMITAPPLYINFO"];
+    if (applyDictionary != nil && applyDictionary != [NSNull null]) {
+        LimitApplyInfo *apply = [[LimitApplyInfo alloc] initWithDictionary:applyDictionary];
+        seckillDetail.limitApplyInfo = apply;
+        [apply release];
+    }
+
+    
+    NSDictionary *okDictionary = [jsonDictionary objectForKey:@"LIMITSUCCESSLIST"];
+    if (okDictionary != nil && okDictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[okDictionary count]];
+        for (NSDictionary *dict in okDictionary) {
+            SeckillOk *add = [[SeckillOk alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        seckillDetail.seckillOkArray = list;
+        [list release];
+    }
+    return [seckillDetail autorelease];
+
+    
+    
+
+}
+
++ (id)parseLimitApply:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseLimit:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseGetCouponInfoList:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"COUPONLIST"];
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Coupon *add = [[Coupon alloc] initWithDictionary:dict];
+        [list addObject:add];
+        [add autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseGetCouponInfoDetail:(NSDictionary *)jsonDictionary {
+    CouponDetail *couponDetail = [[CouponDetail alloc] init];
+    NSDictionary *couponDictionary = [jsonDictionary objectForKey:@"COUPONINFO"];
+    if (couponDictionary != nil && couponDictionary != [NSNull null]) {
+        Coupon *coupon = [[Coupon alloc] initWithDictionary:couponDictionary];
+        couponDetail.coupon = coupon;
+        [coupon release];
+    }
+
+    NSDictionary *merchantDictionary = [jsonDictionary objectForKey:@"MERCHANTINFO"];
+    if (merchantDictionary != nil && merchantDictionary != [NSNull null]) {
+        Merchant *merchant = [[Merchant alloc] initWithDictionary:merchantDictionary];
+        couponDetail.merchant = merchant;
+        [merchant release];
+    }
+
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"MERCHANTLIST"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+        for (NSDictionary *dict in dictionary) {
+            Merchant *add = [[Merchant alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        couponDetail.merchantArray = list;
+        [list release];
+    }
+    return [couponDetail autorelease];
+
+}
+
++ (id)parseDownCouponInfo:(NSDictionary *)jsonDictionary {
+    return nil;//ok
+}
+
++ (id)parseGetGiftList:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"TESTERLIST"];
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Gift *add = [[Gift alloc] initWithDictionary:dict];
+        [list addObject:add];
+        [add autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseGetGiftDetail:(NSDictionary *)jsonDictionary {
+    GiftDetail *giftDetail = [[GiftDetail alloc] init];
+    NSDictionary *giftDictionary = [jsonDictionary objectForKey:@"TESTERINFO"];
+    if (giftDictionary != nil && giftDictionary != [NSNull null]) {
+        Gift *gift = [[Gift alloc] initWithDictionary:giftDictionary];
+        giftDetail.gift = gift;
+        [gift release];
+    }
+        
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"MERCHANTLIST"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+        for (NSDictionary *dict in dictionary) {
+            Merchant *add = [[Merchant alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        giftDetail.merchantArray = list;
+        [list release];
+    }
+    return [giftDetail autorelease];
+
+}
+
++ (id)parseGift:(NSDictionary *)jsonDictionary {
+    return nil;//ok
+}
+
+
+#pragma mark- 我的爱尚
++ (id)parseUserLogin:(NSDictionary *)jsonDictionary {
+    User *user = nil;//[[User alloc] init];
+    NSDictionary *userDictionary = [jsonDictionary objectForKey:@"USERINFO"];
+    if (userDictionary != nil && userDictionary != [NSNull null]) {
+        user = [[User alloc] initWithDictionary:userDictionary];
+    }
+    
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"ADDRESSLIST"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+        for (NSDictionary *dict in dictionary) {
+            Address *add = [[Address alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+        if (user == nil) {
+            user = [[User alloc] init];
+        }
+        user.addressArray = list;
+        [list release];
+    }
+    return [user autorelease];
+
+}
+
++ (id)parseGetRegCode:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseUserReg:(NSDictionary *)jsonDictionary {
+    User *user = nil;//[[User alloc] init];
+    NSDictionary *userDictionary = [jsonDictionary objectForKey:@"USERINFO"];
+    if (userDictionary != nil && userDictionary != [NSNull null]) {
+        user = [[[User alloc] initWithDictionary:userDictionary] autorelease];
+    }
+    
+    return user;
+
+}
+
++ (id)parseGetBackPwd1:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseGetBackPwd2:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseGetLimistListByUser:(NSDictionary *)jsonDictionary {
+    NSDictionary *limitDictionary = [jsonDictionary objectForKey:@"LIMITLIST"];
+    if (limitDictionary == nil || limitDictionary == [NSNull null]) {
+        return nil;
+    }
+    NSMutableArray *limitList = [[NSMutableArray alloc] initWithCapacity:[limitDictionary count]];
+    for (NSDictionary *dict in limitDictionary) {
+        Seckill *seckill = [[Seckill alloc] initWithDictionary:dict];
+        [limitList addObject:seckill];
+        [seckill autorelease];
+    }
+    return [limitList autorelease];
+
+}
+
++ (id)parseGetCouponListByUser:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"COUPONLIST"];
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Coupon *add = [[Coupon alloc] initWithDictionary:dict];
+        [list addObject:add];
+        [add autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseGetGiftListByUser:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"TESTERLIST"];
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Gift *add = [[Gift alloc] initWithDictionary:dict];
+        [list addObject:add];
+        [add autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseEditAndDeleteAddress:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"ADDRESSLIST"];
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Address *add = [[Address alloc] initWithDictionary:dict];
+        [list addObject:add];
+        [add autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseSendFeedback:(NSDictionary *)jsonDictionary {
+    return nil;
+}
+
++ (id)parseGetFeedbackList:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"FEEDLIST"];
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Feedback *add = [[Feedback alloc] initWithDictionary:dict];
+        [list addObject:add];
+        [add autorelease];
+    }
+    return [list autorelease];
+
+}
+
++ (id)parseCheckVersion:(NSDictionary *)jsonDictionary {
+
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"VERSION"];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        Version *version = [[Version alloc] initWithDictionary:dictionary];
+        return [version autorelease];
+    }
+    
+    return nil;
+
+}
+
+
++ (id)parseGetUserIntegralItem:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"INTEGRALITEMLIST"];
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        IntegralRecord *add = [[IntegralRecord alloc] initWithDictionary:dict];
+        [list addObject:add];
+        [add autorelease];
+    }
+    return [list autorelease];
+}
+
+
++ (id)parseGetAttentionList:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"ATTENTIONLIST"];
+    if (dictionary == nil || dictionary == [NSNull null]) {
+        return nil;
+    }
+    NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    for (NSDictionary *dict in dictionary) {
+        Attention *var = [[Attention alloc] initWithDictionary:dict];
+        [list addObject:var];
+        [var autorelease];
+    }
+    return [list autorelease];
+}
+
++ (id)parseAttentionCouponList:(NSDictionary *)jsonDictionary {
+    NSDictionary *dictionary = [jsonDictionary objectForKey:@"COUPONLIST"];
+   NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:[dictionary count]];
+    if (dictionary != nil && dictionary != [NSNull null]) {
+        for (NSDictionary *dict in dictionary) {
+            Activity *add = [[Activity alloc] initWithDictionary:dict];
+            [list addObject:add];
+            [add autorelease];
+        }
+    }
+    return [list autorelease];
+
+}
+
+@end

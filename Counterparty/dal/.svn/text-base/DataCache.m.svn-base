@@ -1,0 +1,61 @@
+
+#import "DataCache.h"
+
+#define kCacheFileName @"beebookdatacache"
+
+
+@implementation DataCache
+
+
+/*
++ (void)saveCacheData:(NSString *)cacheKey stringForCache:(NSString *)cacheString{
+    NSString *todayString = [[[NSDate date] description] substringToIndex:10];
+    NSString *documentDirectory=[[GlobalVariables sharedInstance] documentsDirectory];
+    NSString *cachesPath =[documentDirectory stringByAppendingPathComponent:kCacheFileName];
+     NSString *personalCachesPath = [cachesPath stringByAppendingPathComponent:[GlobalVariables sharedInstance].loginName];
+    NSString *todayCachesPath =[personalCachesPath stringByAppendingPathComponent:todayString];
+   
+    //创建目录
+    if(![[NSFileManager defaultManager] fileExistsAtPath:todayCachesPath])
+    {
+        [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithFormat:@"%@",todayCachesPath] withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+    
+    NSString *cacheDataPath=[todayCachesPath stringByAppendingPathComponent:[Utility md5:cacheKey]];
+    NSData *cacheData = [cacheString dataUsingEncoding:NSUTF8StringEncoding];
+    [cacheData writeToFile:cacheDataPath atomically:YES]; 
+    
+}
++ (NSString *)readCacheData:(NSString *)cacheKey{
+    NSString *todayString = [[[NSDate date] description] substringToIndex:10];
+    NSString *documentDirectory=[[GlobalVariables sharedInstance] documentsDirectory];
+    NSString *cachesPath =[documentDirectory stringByAppendingPathComponent:kCacheFileName];
+    NSString *personalCachesPath = [cachesPath stringByAppendingPathComponent:[GlobalVariables sharedInstance].loginName];
+    NSString *todayCachesPath =[personalCachesPath stringByAppendingPathComponent:todayString];
+    
+
+    if(![[NSFileManager defaultManager] fileExistsAtPath:todayCachesPath])
+    {
+        return @"";
+    }
+    NSFileManager *fileManage = [NSFileManager defaultManager];
+    NSString *cacheDataPath=[todayCachesPath stringByAppendingPathComponent:[Utility md5:cacheKey]];
+    if(![[NSFileManager defaultManager] fileExistsAtPath:personalCachesPath]){
+        return @"";
+    }
+    NSData *cacheData = [fileManage contentsAtPath:cacheDataPath];//myFilePath是包含完整路径的文件名
+    if (cacheData == nil || [cacheData length]==0) {
+        return @"";
+    }
+    else{
+        NSString* cacheString;
+        cacheString = [[NSString alloc] initWithData:cacheData encoding:NSUTF8StringEncoding];
+        [cacheString autorelease];
+        return cacheString;
+    }
+}
+
+ 
+ */
+ 
+@end

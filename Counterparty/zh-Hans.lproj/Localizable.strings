@@ -1,0 +1,43 @@
+/* 
+  Localizable.strings
+  Counterparty
+
+  Created by ouyang on 14-7-26.
+  Copyright (c) 2014年 ori. All rights reserved.
+*/
+"Home"="主页";
+"Orders"="挂单";
+"Assets"="资产";
+"AssetInfo"="资产信息";
+"Burns"="燃烧";
+"More"="更多";
+"Counterparty"="合约币";
+"XCP"="XCP";
+"Address"="地址";
+"AllLoaded"="已全部加载!";
+"PullDownToRefresh"="下拉刷新...";
+"ReleaseToRefresh"="松开刷新...";
+"Refresh"="刷新...";
+"PullUpToGetMore"="上拉获取更多...";
+"LoosenToGetMore"="松开获取更多...";
+"Updating"="更新...";
+"LastUpdated"="最后更新";
+"AllContentHasBeenDisplayed"="没有了哦";
+"Loading"="加载中...";
+"Balance"="最终余额";
+"TotalCredits"="总计收款";
+"TransactionsNo"="交易次数";
+"LatestVersion"="最新版本";
+"NoUpdate"="您使用的已经是最新的版本!";
+"Cancel"="取消";
+"Update"="更新";
+"AboutUs"="关于我们";
+"VersionUpdate"="版本更新";
+"Transactions"="事务";
+"Broadcasts"="广播";
+"AddressBalance"="账户余额";
+"UserNotSet"="用户未设置";
+"Agreement"="协议";
+"ContactUs"="联系我们：";
+"CounterpartyDesc"="Counterparty是建立在比特币协议上的传输层，用来建立和使用去中心化的财务工具协议。";
+

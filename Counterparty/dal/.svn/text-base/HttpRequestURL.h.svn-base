@@ -1,0 +1,23 @@
+
+//初始化
+#define kHttpRequestCardApiSystemInit @"method=card_api_system_init"
+
+//商圈模块
+#define kHttpRequestCardApiZoneList @"method=card_api_zone_list"
+#define kHttpRequestCardApiZoneSet @"method=card_api_zone_set"
+
+//会员卡模块
+//#define kHttpRequestCardSychCard @"method=card_api_store_list"
+#define kHttpRequestStoreDetail @"method=card_api_store_list"
+#define kHttpRequestCardConsumption @"method=card_api_card_consumption"
+#define kHttpRequestCardUnbind @"method=card_api_card_delete"
+#define kHttpRequestCardApply @"method=card_api_card_apply"
+
+//分享收藏模块
+#define kHttpRequestShareAddFavorite @"method=share_add_favorite"
+#define kHttpRequestShareGetFavorite @"method=share_get_favorite"
+#define kHttpRequestShareDeleteFavorite @"method=share_delete_favorite"
+
+
+//版本更新模块
+#define kHttpRequestClientUpdateVersion @"method=client_update_version"

@@ -1,0 +1,461 @@
+//
+//  DataMgr.m
+//  AiShang
+//
+//  Created by ouyang on 12-5-28.
+//  Copyright (c) 2012年 onhand. All rights reserved.
+//
+
+#import "DataMgr.h"
+#import "OriNavBar.h"
+#import "ValidationUtil.h"
+#import "Reachability.h"
+#import "TimeUtil.h"
+#import "CipherUtil.h"
+
+@implementation DataMgr
+
++ (AppDelegate *)getAppDelegate {
+    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+    return appDelegate;
+}
+
++ (UINavigationController *)getCurrentNavigationController {
+    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+    TabBarController *tabBarController = appDelegate.tabBarController;
+    return [[tabBarController viewControllers] objectAtIndex:tabBarController.selectedIndex];
+}
+
++ (UINavigationController *)getNavigationController
+{
+	NSArray *nibs = [[NSBundle mainBundle] loadNibNamed:@"OriNavBar" owner:self options:nil];
+	UINavigationController *navController = [nibs objectAtIndex:0]; 
+	OriNavBar *bar=(OriNavBar *)navController.navigationBar;	
+	bar.tintColor=[UIColor lightGrayColor];
+    navController.navigationBar.barStyle = UIBarStyleBlack;
+	return navController;
+}
+
++ (NSString *)getImei {
+    NSString *imei = [UIDevice currentDevice].uniqueIdentifier;
+    return imei;
+}
+
++ (NSString *)getPhoneNumber {
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *phoneNumber = [defaults valueForKey:@"savePhoneNumber"];
+    if (phoneNumber == nil || phoneNumber == [NSNull null]) {
+        phoneNumber = @"";
+    }
+    return phoneNumber;
+}
+
++ (void)savePhoneNumber:(NSString *)phone {
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:phone forKey:@"savePhoneNumber"];
+    [defaults synchronize];
+}
+
++ (NSString *)getLoginEmail {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *email = [defaults valueForKey:@"saveLoginEmail"];
+    if (email == nil || email == [NSNull null]) {
+        email = @"";
+    }
+    return email;
+
+}
+
++ (void)saveLoginEmail:(NSString *)email {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:email forKey:@"saveLoginEmail"];
+    [defaults synchronize];
+
+}
+
+
++ (double)getLat {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    double lat = [defaults doubleForKey:@"saveLat"];
+    return lat;
+}
+
++ (double)getLon {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    double lon = [defaults doubleForKey:@"saveLon"];
+    return lon;
+}
+
++ (void)saveLat:(double)lat {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setDouble:lat forKey:@"saveLat"];
+    [defaults synchronize];
+}
+
++ (void)saveLon:(double)lon {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setDouble:lon forKey:@"saveLon"];
+    [defaults synchronize];
+}
+
+
++ (NSString *)getUid {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *uid = [defaults valueForKey:@"saveUid"];//@"13810661236";//@"18610079091";//aszk
+    if (uid == nil) {
+        uid = @"0";
+    }
+    return uid;
+}
+
+
++ (void)saveUid:(NSString *)uid {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:uid forKey:@"saveUid"];
+    [defaults synchronize];
+}
+
++ (BOOL)isLogin {
+    return [DataMgr getLoginType] > 0;
+}
+
++ (int)getLoginType; {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSNumber *loginType = [defaults valueForKey:@"saveLogin"];
+    if (loginType == nil || loginType == [NSNull null]) {
+        return 0;
+    }
+    return loginType.intValue;
+}
+
+//0未登录 1：手机登录  2：邮箱登录
++ (void)saveLogin:(int)loginType {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:[NSNumber numberWithInt:loginType] forKey:@"saveLogin"];
+    [defaults synchronize];
+    
+}
+
+
++ (NSString *)getUserName {
+    return [DataMgr getPhoneNumber];
+    
+    int loginType = [DataMgr getLoginType];
+    if (loginType == 1) {
+        return [DataMgr getPhoneNumber];
+    }
+    else if (loginType == 2) {
+        return [DataMgr getLoginEmail];
+    }
+    return @"";
+}
+
++ (NSString *)getPassword {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSData *desData = [defaults valueForKey:@"savePassword"];
+    if ([desData isKindOfClass:[NSData class]]) {
+        NSData *passwordData = [CipherUtil desData:desData key:[DataMgr getDesKey] CCOperation:kCCDecrypt];
+        NSString *password = [[NSString alloc] initWithData:passwordData encoding:NSUTF8StringEncoding];
+        NSLog(@"----------de pass=%@", password);
+        return [password autorelease];
+    }
+    return @"";
+}
+
++ (void)savePassword:(NSString *)password {
+    NSLog(@"----------ori pass=%@", password);
+    NSData *saveData = [CipherUtil desData:[password dataUsingEncoding:NSUTF8StringEncoding] key:[DataMgr getDesKey] CCOperation:kCCEncrypt];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:saveData forKey:@"savePassword"];
+    [defaults synchronize];
+}
+
++ (NSString *)getDesKey {
+    return @"dec014de";
+}
+
++ (void)saveVip:(NSString *)vip {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:vip forKey:@"saveVip"];
+    [defaults synchronize];
+}
+
+
++ (NSString *)getVip {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *vip = [defaults valueForKey:@"saveVip"];
+    return vip;
+}
+
+
++ (NSString *)getJifen {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *jifen = [defaults valueForKey:@"saveJifen"];
+    if (jifen == nil) {
+        jifen = @"0";
+    }
+    return jifen;
+}
+
++ (void)saveJifen:(NSString *)jifen {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:jifen forKey:@"saveJifen"];
+    [defaults synchronize];
+}
+
++ (NSString *)getRealName {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *realName = [defaults valueForKey:@"saveRealName"];
+    if (realName == nil || realName == [NSNull null]) {
+        realName = @"";
+    }
+
+    return realName;
+}
+
+
++ (void)saveRealName:(NSString *)realName {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:realName forKey:@"saveRealName"];
+    [defaults synchronize];
+}
+
+
++ (User *)getUser {
+    User *user = [[User alloc] init];
+    user.uid = [DataMgr getUid];
+    user.phoneno = [DataMgr getPhoneNumber];
+    user.integral = [DataMgr getJifen];
+    user.vip = [DataMgr getVip];
+    user.name = [DataMgr getRealName];
+    return [user autorelease];
+}
+
++ (NSString *)getAddress {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *address = [defaults valueForKey:@"saveAddress"];
+    if (address == nil || address == [NSNull null]) {
+        address = @"";
+    }
+    return address;
+}
+
++ (void)saveAddress:(NSString *)address {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:address forKey:@"saveAddress"];
+    [defaults synchronize];
+
+}
+
++ (NSString *)getAddressTel {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *tel = [defaults valueForKey:@"saveAddressTel"];
+    if (tel == nil || tel == [NSNull null]) {
+        tel = @"";
+    }
+    return tel;
+}
+
++ (void)saveAddressTel:(NSString *)tel {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:tel forKey:@"saveAddressTel"];
+    [defaults synchronize];
+    
+}
+
+
++ (void)logout {
+    [DataMgr saveLogin:0];
+    [DataMgr saveUid:@""];
+    [DataMgr savePhoneNumber:@""];
+    [DataMgr saveLoginEmail:@""];
+    [DataMgr saveJifen:@"0"];
+    [DataMgr savePassword:@""];
+    [DataMgr saveAddress:@""];
+    [DataMgr saveRealName:@""];
+    [DataMgr saveAddressTel:@""];
+    [DataMgr saveVip:@""];
+    [DataMgr clearSignIn];
+}
+
++ (BOOL)isShowPic {
+    if (kIsTest) {
+        return [DataMgr get3gSaveUp] == 0;
+    }
+    int saveup = [DataMgr get3gSaveUp];
+    NSString *currentNet = [DataMgr getAppDelegate].currentNet;
+    if (currentNet != nil && [currentNet isEqualToString:@"3g"] && saveup == 1) {
+        return NO;
+    }
+    return YES;
+}
+
++ (void)set3gSaveUp:(BOOL)saveup {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:[NSNumber numberWithBool:saveup] forKey:@"set3gSaveUp"];
+    [defaults synchronize];
+}
+
++ (int)get3gSaveUp {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSNumber *saveup = [defaults valueForKey:@"set3gSaveUp"];
+    if (saveup == nil) {
+        return -1;
+    }
+    return saveup.intValue;
+}
+
++ (NSString*)getCurrentNet {
+    NSString *result = [[NSString alloc] init];
+    Reachability *r = [Reachability reachabilityWithHostName:@"www.apple.com"];
+    switch ([r currentReachabilityStatus]) {
+        case NotReachable:// 没有网络连接
+            result = nil;
+            break;
+        case ReachableViaWWAN:// 使用3G网络
+            result = @"3g";
+            break;
+        case ReachableViaWiFi:// 使用WiFi网络
+            result = @"wifi";
+            break;
+    }
+    return result;
+}
+
+
++ (BOOL)isSignInToday {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSNumber *saveDay = [defaults valueForKey:@"saveDay"];
+    NSNumber *save1970 = [defaults valueForKey:@"save1970"];
+    
+    int nowDay = [TimeUtil getDay];
+    int nowSince1970 = [TimeUtil since1970];
+    if (nowDay == saveDay.intValue && nowSince1970 - save1970.intValue < 24 * 60 * 60) {
+        return YES;
+    }
+    
+    return NO;
+}
+
++ (void)saveSignIn {
+    int since1970 = [TimeUtil since1970];
+    int day = [TimeUtil getDay];
+        
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:[NSNumber numberWithInt:since1970] forKey:@"save1970"];
+    [defaults setValue:[NSNumber numberWithInt:day] forKey:@"saveDay"];
+    
+    [defaults synchronize];
+}
+
++ (void)clearSignIn {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:[NSNumber numberWithInt:0] forKey:@"save1970"];
+    [defaults setValue:[NSNumber numberWithInt:32] forKey:@"saveDay"];
+    
+    [defaults synchronize];
+    
+}
+
+
++ (BOOL)isEmagaCheck {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL check = [defaults boolForKey:@"saveEmagaCheck"];
+    return check;
+}
+
++ (void)saveEmagaCheck:(BOOL)check {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:check forKey:@"saveEmagaCheck"];
+    [defaults synchronize];
+
+}
+
++ (NSString *)getMagaEmail {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *email = [defaults valueForKey:@"saveMagaEmail"];
+    if (email == nil || email == [NSNull null]) {
+        email = @"";
+    }
+    return email;
+}
+
++ (void)saveMagaEmail:(NSString *)email {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:email forKey:@"saveMagaEmail"];
+    [defaults synchronize];
+}
+
++ (BOOL)isRealMagaCheck {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL check = [defaults boolForKey:@"saveRealMagaCheck"];
+    return check;
+
+}
+
++ (void)saveRealMagaCheck:(BOOL)check {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:check forKey:@"saveRealMagaCheck"];
+    [defaults synchronize];
+}
+
++ (NSString *)getMagaAddress {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *address = [defaults valueForKey:@"saveMagaAddress"];
+    if (address == nil || address == [NSNull null]) {
+        address = @"";
+    }
+    return address;
+
+}
+
++ (void)saveMagaAddress:(NSString *)address {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:address forKey:@"saveMagaAddress"];
+    [defaults synchronize];
+}
+
+
++ (BOOL)isAlertInMore {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL alert = [defaults boolForKey:@"saveAlertInMore"];
+    return alert;
+}
+
++ (void)saveAlertInMore:(BOOL)alert {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:alert forKey:@"saveAlertInMore"];
+    [defaults synchronize];
+}
+
++ (BOOL)isAlertInVip {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL alert = [defaults boolForKey:@"saveAlertInVip"];
+    return alert;
+}
+
++ (void)saveAlertInVip:(BOOL)alert {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:alert forKey:@"saveAlertInVip"];
+    [defaults synchronize];
+}
+
++ (int)getReadCount:(NSString *)activityId itemId:(NSString *)itemId {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = [NSString stringWithFormat:@"%@_%@", itemId, activityId];
+    int count = [defaults integerForKey:key];
+    return count;
+}
+
++ (void)plusReadCount:(NSString *)activityId itemId:(NSString *)itemId {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = [NSString stringWithFormat:@"%@_%@", itemId, activityId];    
+    int count = [defaults integerForKey:key];
+    [defaults setInteger:++count forKey:key];
+    [defaults synchronize];
+}
+
+
+@end

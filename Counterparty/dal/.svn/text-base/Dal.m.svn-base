@@ -1,0 +1,1019 @@
+
+#import "Dal.h"
+#import "AppDelegate.h"
+#import "Constant.h"
+#import "DataMgr.h"
+#import "DataParser.h"
+#import "Log.h"
+
+#define RESPONSE_DATA_CACHE_ENABLE 0
+
+@implementation Dal
+
+@synthesize userId;
+@synthesize error = _error;
+@synthesize managedObjectContext;
+@synthesize dalDelegate = _dalDelegate;
+
+
+- (id)init{
+    self = [super init];
+    if (self) {
+        _http = [[Http alloc] init];
+        _http.httpDelegate = self;
+        
+        _error = [[Error alloc] init];
+        [_error reset];
+    }
+    return self;
+}
+
+
+
+- (NSDictionary *)paramsDictionary:(NSString *)key valueForKey:(NSString *)value{
+    NSMutableDictionary *dic = [[NSMutableDictionary alloc] initWithCapacity:2];
+    [dic setObject:key forKey:kRequestParamName];
+    
+    if (value != nil) {
+        [dic setObject:value forKey:kRequestParamValue];
+    }
+    else{
+        [dic setObject:@"" forKey:kRequestParamValue];
+    }
+    return [dic autorelease];
+}
+
+- (NSString *)generatePostText:(NSString *)cmd argsArray:(NSMutableArray *)argsArray {
+    NSMutableString *postText = [[[NSMutableString alloc] init] autorelease];
+    /* ------通用参数----- */
+    [postText appendFormat:@"{\"FAVOUR\":{\"CMD\":\"%@\",\"VERSION\":\"%@\"},", cmd, kAppVersionCode];
+    [postText appendFormat:@"\"ARGS\":{\"IMEI\":\"%@\",\"PHONENO\":\"%@\",\"FROM\":\"iphone\"", [DataMgr getImei], [DataMgr getPhoneNumber]];
+    
+    /* ------业务参数----- */    
+    NSMutableString *businessParamsText = [[[NSMutableString alloc] init] autorelease];
+    if (argsArray == nil || [argsArray count] <= 0) {
+        [businessParamsText appendString:@""];
+    }
+    NSInteger count = 0;
+    for (NSDictionary *dic in argsArray) {
+        NSString *paramName = [dic objectForKey:kRequestParamName];
+        NSString *paramValue = [dic objectForKey:kRequestParamValue];
+        
+        if (count < [argsArray count] - 1) {
+            [businessParamsText appendFormat:@",\"%@\":\"%@\"", paramName, paramValue];
+        }
+        else{
+            [businessParamsText appendFormat:@",\"%@\":\"%@\"", paramName, paramValue];
+        }        
+        count ++;
+    }
+    [postText appendFormat:@"%@}}", businessParamsText];
+    return [NSString stringWithFormat:@"%@", postText];
+}
+
+
+- (void) cancel{
+    [_http cancel];
+}
+
+
+#pragma mark -
+#pragma mark - 业务接口方法
+
+#pragma mark - 本地优惠
+
+- (void)getTuijianList:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetTuijianList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+
+    NSString *postText = [self generatePostText:@"getCommendActivityList" argsArray:argsArray];
+//    NSString *postText = [self generatePostText:@"getCommendActivityList" argsArray:argsArray];
+    
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+
+- (void)getAreaList {
+    DataType actionType = DataTypeGetAreaList;
+    
+    NSString *postText = [self generatePostText:@"getAreaList" argsArray:nil];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+- (void)getAreaAndTypeList {
+    DataType actionType = DataTypeGetAreaAndTypeList;
+    
+    NSString *postText = [self generatePostText:@"getAreaAndTypeList" argsArray:nil];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+- (void)getMerchantListByAreaAndType:(NSString *)areaId merchantTypeId:(NSString *)merchantTypeId orderType:(int)orderType beginPage:(int)beginPage pageSize:(int)pageSize {
+    
+    DataType actionType = DataTypeGetMerchantListByAreaAndType;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:5];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    [argsArray addObject:[self paramsDictionary: @"AREAID" valueForKey:[NSString stringWithFormat:@"%@", areaId]]];
+    [argsArray addObject:[self paramsDictionary: @"MERCHANTTYPEID" valueForKey:[NSString stringWithFormat:@"%@", merchantTypeId]]];
+    [argsArray addObject:[self paramsDictionary: @"ORDERTYPE" valueForKey:[NSString stringWithFormat:@"%d", orderType]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+
+    NSString *postText = [self generatePostText:@"getMerchantListByAreaAndType" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+- (void)getMerchantDetail:(NSString *)merchantId couponType:(NSString *)couponType beginPage:(int)beginPage {
+    DataType actionType = DataTypeGetMerchantDetail;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:4];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];    
+    [argsArray addObject:[self paramsDictionary: @"MERCHANTID" valueForKey:[NSString stringWithFormat:@"%@", merchantId]]];
+    [argsArray addObject:[self paramsDictionary: @"COUPON_TYPE" valueForKey:[NSString stringWithFormat:@"%@", couponType]]];
+    
+    NSString *postText = [self generatePostText:@"getMerchantDetail" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+- (void)getMerchantList:(NSString *)ChainId beginPage:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetMerchantList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    
+    [argsArray addObject:[self paramsDictionary: @"CHAIN_ID" valueForKey:[NSString stringWithFormat:@"%@", ChainId]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+
+    NSString *postText = [self generatePostText:@"getMerchantChild" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+- (void)getMerchantCouponList:(NSString *)merchantId {
+    DataType actionType = DataTypeGetMerchantCouponList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    
+    [argsArray addObject:[self paramsDictionary: @"merchantId" valueForKey:[NSString stringWithFormat:@"%@", merchantId]]];
+
+    NSString *postText = [self generatePostText:@"getMerchantCouponList" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+}
+
+- (void)getCouponDetail:(NSString *)couponId couponType:(int)couponType {
+    DataType actionType = DataTypeGetCouponDetail;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    
+    [argsArray addObject:[self paramsDictionary: @"COUPON_ID" valueForKey:[NSString stringWithFormat:@"%@", couponId]]];
+    [argsArray addObject:[self paramsDictionary: @"COUPON_TYPE" valueForKey:[NSString stringWithFormat:@"%d", couponType]]];
+    
+    NSString *postText = [self generatePostText:@"getCouponDetail" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+- (void)getAllBrands:(NSString *)type orderType:(int)orderType beginPage:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetAllBrands;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:4];
+    
+    [argsArray addObject:[self paramsDictionary: @"TYPE" valueForKey:[NSString stringWithFormat:@"%@", type]]];
+    [argsArray addObject:[self paramsDictionary: @"ORDERTYPE" valueForKey:[NSString stringWithFormat:@"%d", orderType]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    
+    NSString *postText = [self generatePostText:@"getAllBrands" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+- (void)getBrandById:(NSString *)brandId couponType:(NSString *)couponType beginPage:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetBrandById;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:5];
+    
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"BRAND_ID" valueForKey:[NSString stringWithFormat:@"%@", brandId]]];
+    [argsArray addObject:[self paramsDictionary: @"COUPON_TYPE" valueForKey:[NSString stringWithFormat:@"%@", couponType]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+
+    NSString *postText = [self generatePostText:@"getBrandById" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+
+}
+
+
+- (void)search:(NSString *)keyword searchType:(int)searchType beginPage:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeSearch;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:4];
+    
+    [argsArray addObject:[self paramsDictionary: @"KEY_WORD" valueForKey:[NSString stringWithFormat:@"%@", keyword]]];
+    [argsArray addObject:[self paramsDictionary: @"SEARCH_TYPE" valueForKey:[NSString stringWithFormat:@"%d", searchType]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    
+    NSString *postText = [self generatePostText:@"search" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];  }
+
+#pragma mark -附近
+- (void)getLBSMerchantList:(NSString *)range typeId:(NSString *)typeId lat:(float)lat lon:(float)lon beginPage:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetLBSMerchantList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:5];
+    [argsArray addObject:[self paramsDictionary: @"RANGE" valueForKey:[NSString stringWithFormat:@"%@", range]]];
+    [argsArray addObject:[self paramsDictionary: @"TYPE_ID" valueForKey:[NSString stringWithFormat:@"%@", typeId]]];
+    [argsArray addObject:[self paramsDictionary: @"POSY" valueForKey:[NSString stringWithFormat:@"%f", lat]]];
+    [argsArray addObject:[self paramsDictionary: @"POSX" valueForKey:[NSString stringWithFormat:@"%f", lon]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+
+    NSString *postText = [self generatePostText:@"getNearMerchant" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+#pragma mark -vip特权
+- (void)getLimitList:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetLimitList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO) {
+        [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    }
+    NSString *postText = [self generatePostText:@"getLimitList" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+- (void)getLimitById:(NSString *)limitId {
+    DataType actionType = DataTypeGetLimitById;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    [argsArray addObject:[self paramsDictionary: @"LID" valueForKey:[NSString stringWithFormat:@"%@", limitId]]];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    NSString *postText = [self generatePostText:@"getLimitById" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+//抱团秒报名
+- (void)limitApply:(NSString *)limitId uid:(NSString *)uid {
+    DataType actionType = DataTypeLimitApply;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"LID" valueForKey:[NSString stringWithFormat:@"%@", limitId]]];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", uid]]];
+    [argsArray addObject:[self paramsDictionary: @"USER_ID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];    
+    NSString *postText = [self generatePostText:@"limitApply" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//秒杀
+- (void)limit:(NSString *)limitId uid:(NSString *)uid {
+    DataType actionType = DataTypeLimit;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"LID" valueForKey:[NSString stringWithFormat:@"%@", limitId]]];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", uid]]];
+    NSString *postText = [self generatePostText:@"limit" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//优惠券列表
+- (void)getCouponInfoList:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetCouponInfoList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    NSString *postText = [self generatePostText:@"getCoupons" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//优惠券详情
+- (void)getCouponInfoDetail:(NSString *)couponId lat:(float)lat lon:(float)lon {
+    DataType actionType = DataTypeGetCouponInfoDetail;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"CID" valueForKey:[NSString stringWithFormat:@"%@", couponId]]];
+    [argsArray addObject:[self paramsDictionary: @"Y" valueForKey:[NSString stringWithFormat:@"%f", lat]]];
+    [argsArray addObject:[self paramsDictionary: @"X" valueForKey:[NSString stringWithFormat:@"%f", lon]]];
+    NSString *postText = [self generatePostText:@"getCouponInfoDetail" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//优惠券下载
+- (void)downCouponInfo:(NSString *)couponId phone:(NSString *)phone {
+    DataType actionType = DataTypeDownCouponInfo;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"CID" valueForKey:[NSString stringWithFormat:@"%@", couponId]]];
+    [argsArray addObject:[self paramsDictionary: @"PHONE" valueForKey:[NSString stringWithFormat:@"%@", phone]]];
+    NSString *postText = [self generatePostText:@"downloadCoupon" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//积分兑换列表
+- (void)getGiftList:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetGiftList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    NSString *postText = [self generatePostText:@"getTesters" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//积分兑换详情页
+- (void)getGiftDetail:(NSString *)giftId {
+    DataType actionType = DataTypeGetGiftDetail;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    [argsArray addObject:[self paramsDictionary: @"TID" valueForKey:[NSString stringWithFormat:@"%@", giftId]]];
+    NSString *postText = [self generatePostText:@"getTesterDetail" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//积分兑换
+- (void)gift:(NSString *)giftId uid:(NSString *)uid {
+    DataType actionType = DataTypeGift;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"TID" valueForKey:[NSString stringWithFormat:@"%@", giftId]]];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", uid]]];
+    NSString *postText = [self generatePostText:@"tester" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+}
+
+
+#pragma mark -我的爱尚
+//登录
+- (void)userLogin:(NSString *)username password:(NSString *)password {
+    if (username != nil && [username length] > 0) {
+        [DataMgr savePhoneNumber:username];
+    }
+
+    DataType actionType = DataTypeUserLogin;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"USERNAME" valueForKey:[NSString stringWithFormat:@"%@", username]]];
+    [argsArray addObject:[self paramsDictionary: @"PASSWD" valueForKey:[NSString stringWithFormat:@"%@", password]]];
+    NSString *postText = [self generatePostText:@"userLogin" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//发送验证码
+- (void)getRegCode:(NSString *)phone {
+    if (phone != nil && [phone length] > 0) {
+        [DataMgr savePhoneNumber:phone];
+    }
+    
+    DataType actionType = DataTypeGetRegCode;
+
+    NSString *postText = [self generatePostText:@"getRegCode" argsArray:nil];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//注册
+- (void)userReg:(NSString *)regCode password:(NSString *)password {
+    [self userReg:regCode password:password inviteCode:@""];
+    return;
+    
+    DataType actionType = DataTypeUserReg;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"REGCODE" valueForKey:[NSString stringWithFormat:@"%@", regCode]]];
+    [argsArray addObject:[self paramsDictionary: @"PASSWD" valueForKey:[NSString stringWithFormat:@"%@", password]]];
+    NSString *postText = [self generatePostText:@"userReg" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+- (void)userReg:(NSString *)regCode password:(NSString *)password inviteCode:(NSString *)inviteCode {
+    DataType actionType = DataTypeUserReg;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"REGCODE" valueForKey:[NSString stringWithFormat:@"%@", regCode]]];
+    [argsArray addObject:[self paramsDictionary: @"PASSWD" valueForKey:[NSString stringWithFormat:@"%@", password]]];
+    [argsArray addObject:[self paramsDictionary: @"INVITE_CODE" valueForKey:[NSString stringWithFormat:@"%@", inviteCode]]];    
+    NSString *postText = [self generatePostText:@"userReg" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+//找回密码获取验证码
+- (void)getBackPwd1:(NSString *)phone {
+    if (phone != nil && [phone length] > 0) {
+        [DataMgr savePhoneNumber:phone];
+    }
+
+    DataType actionType = DataTypeGetBackPwd1;
+    
+    NSString *postText = [self generatePostText:@"getBackPwd1" argsArray:nil];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//密码重置
+- (void)getBackPwd2:(NSString *)pwcode password:(NSString *)password {
+    DataType actionType = DataTypeGetBackPwd2;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"PWCODE" valueForKey:[NSString stringWithFormat:@"%@", pwcode]]];
+    [argsArray addObject:[self paramsDictionary: @"PASSWORD" valueForKey:[NSString stringWithFormat:@"%@", password]]];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];    
+    NSString *postText = [self generatePostText:@"getBackPwd2" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+//修改密码
+-(void)updatePwd:(NSString *)old_pwd new_pwd:(NSString *)new_pwd
+{
+    DataType actionType = DataTypeUpDatePwd;
+    NSMutableArray * argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary:@"OLD_PWD" valueForKey:[NSString stringWithFormat:@"%@",old_pwd]]];
+    [argsArray addObject:[self paramsDictionary:@"NEW_PWD" valueForKey:[NSString stringWithFormat:@"%@",new_pwd]]];
+    NSString * postText = [self generatePostText:@"updatePwd" argsArray:argsArray];
+    
+    NSMutableArray * paramsArray = [NSMutableArray arrayWithCapacity:1];
+    [paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+//抱团秒历史记录
+- (void)getLimistListByUser:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetLimistListByUser;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];    
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    NSString *postText = [self generatePostText:@"getLimistListByUser" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//优惠券历史记录
+- (void)getCouponListByUser:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetCouponListByUser;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];    
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    NSString *postText = [self generatePostText:@"getCouponListByUser" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//积分兑换历史记录
+- (void)getGiftListByUser:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetGiftListByUser;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];    
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    NSString *postText = [self generatePostText:@"getTestListByUser" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+
+/*
+ 编辑地址(新增，修改，删除)
+ 
+ ADDRESSID	地址Id，如果ID为空表示新曾，只有地址ID为删除。
+ PC	省份代码
+ PN	省份名称
+ CC	城市代码
+ CN	城市名称
+ ADDRESS	地址详细
+ NAME	收获人姓名
+ MOBILE	收货人手机号
+ TEL	收货人座机
+ POSTCODE	右边
+ DA	是否是默认， 0非默认，1默认
+ */
+
+- (void)editAndDeleteAddress:(NSString *)addressId da:(NSString *)da pc:(NSString *)pc pn:(NSString *)pn cc:(NSString *)cc cn:(NSString *)cn address:(NSString *)address name:(NSString *)name mobile:(NSString *)mobile tel:(NSString *)tel postCode:(NSString *)postCode {
+
+    DataType actionType = DataTypeEditAndDeleteAddress;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:14];
+    [argsArray addObject:[self paramsDictionary: @"USERNAME" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUserName]]]];
+    [argsArray addObject:[self paramsDictionary: @"PASSWD" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getPassword]]]];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+
+    if (addressId == nil && da == nil) {
+        actionType = DataTypeAddressList;
+    } 
+    else if (addressId != nil && da == nil) {
+        actionType = DataTypeAddressDelete;  
+        [argsArray addObject:[self paramsDictionary: @"ADDRESSID" valueForKey:[NSString stringWithFormat:@"%@", addressId]]];
+    }
+    else if (addressId == nil && da != nil) {
+        actionType = DataTypeAddressAdd;
+        [argsArray addObject:[self paramsDictionary: @"DA" valueForKey:[NSString stringWithFormat:@"%@", da]]];
+        [argsArray addObject:[self paramsDictionary: @"PC" valueForKey:[NSString stringWithFormat:@"%@", pc]]];
+        [argsArray addObject:[self paramsDictionary: @"PN" valueForKey:[NSString stringWithFormat:@"%@", pn]]];
+        [argsArray addObject:[self paramsDictionary: @"CC" valueForKey:[NSString stringWithFormat:@"%@", cc]]];
+        [argsArray addObject:[self paramsDictionary: @"CN" valueForKey:[NSString stringWithFormat:@"%@", cn]]];
+        [argsArray addObject:[self paramsDictionary: @"ADDRESS" valueForKey:[NSString stringWithFormat:@"%@", address]]];
+        [argsArray addObject:[self paramsDictionary: @"NAME" valueForKey:[NSString stringWithFormat:@"%@", name]]];
+        [argsArray addObject:[self paramsDictionary: @"MOBILE" valueForKey:[NSString stringWithFormat:@"%@", mobile]]];
+        [argsArray addObject:[self paramsDictionary: @"TEL" valueForKey:[NSString stringWithFormat:@"%@", tel]]];
+        [argsArray addObject:[self paramsDictionary: @"POSTCODE" valueForKey:[NSString stringWithFormat:@"%@", postCode]]];
+    }
+    else if (addressId != nil && da != nil) {
+        actionType = DataTypeAddressUpdate;    
+        [argsArray addObject:[self paramsDictionary: @"ADDRESSID" valueForKey:[NSString stringWithFormat:@"%@", addressId]]];
+        [argsArray addObject:[self paramsDictionary: @"DA" valueForKey:[NSString stringWithFormat:@"%@", da]]];
+        [argsArray addObject:[self paramsDictionary: @"PC" valueForKey:[NSString stringWithFormat:@"%@", pc]]];
+        [argsArray addObject:[self paramsDictionary: @"PN" valueForKey:[NSString stringWithFormat:@"%@", pn]]];
+        [argsArray addObject:[self paramsDictionary: @"CC" valueForKey:[NSString stringWithFormat:@"%@", cc]]];
+        [argsArray addObject:[self paramsDictionary: @"CN" valueForKey:[NSString stringWithFormat:@"%@", cn]]];
+        [argsArray addObject:[self paramsDictionary: @"ADDRESS" valueForKey:[NSString stringWithFormat:@"%@", address]]];
+        [argsArray addObject:[self paramsDictionary: @"NAME" valueForKey:[NSString stringWithFormat:@"%@", name]]];
+        [argsArray addObject:[self paramsDictionary: @"MOBILE" valueForKey:[NSString stringWithFormat:@"%@", mobile]]];
+        [argsArray addObject:[self paramsDictionary: @"TEL" valueForKey:[NSString stringWithFormat:@"%@", tel]]];
+        [argsArray addObject:[self paramsDictionary: @"POSTCODE" valueForKey:[NSString stringWithFormat:@"%@", postCode]]];
+
+    }
+    
+    
+    NSString *postText = [self generatePostText:@"editAndDeleteAddress" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//意见反馈提交
+- (void)sendFeedback:(NSString *)feedback {
+    DataType actionType = DataTypeSendFeedback;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    [argsArray addObject:[self paramsDictionary: @"FEEDBACK" valueForKey:[NSString stringWithFormat:@"%@", feedback]]];
+    NSString *postText = [self generatePostText:@"getFeedBack" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//意见反馈查看
+- (void)getFeedbackList:(int)beginPage pageSize:(int)pageSize {
+    DataType actionType = DataTypeGetFeedbackList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    if (NO)
+    [argsArray addObject:[self paramsDictionary: @"pageSize" valueForKey:[NSString stringWithFormat:@"%d", pageSize]]];
+    NSString *postText = [self generatePostText:@"getFeedBackList" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+//检查更新
+- (void)checkVersion:(NSString *)version {
+    DataType actionType = DataTypeCheckVersion;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    [argsArray addObject:[self paramsDictionary: @"VERSION" valueForKey:[NSString stringWithFormat:@"%@", version]]];
+    NSString *postText = [self generatePostText:@"checkVersion" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];	
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];    
+    
+}
+
+
+//绑定手机号
+- (void)addPhone:(NSString *)phone regCode:(NSString *)regCode email:(NSString *)email {
+    if (phone != nil && [phone length] > 0) {
+        [DataMgr savePhoneNumber:phone];
+    }
+
+    DataType actionType = DataTypeAddPhone;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"REG_CODE" valueForKey:[NSString stringWithFormat:@"%@", regCode]]];
+    [argsArray addObject:[self paramsDictionary: @"EMAIL" valueForKey:[NSString stringWithFormat:@"%@", email]]];    
+    NSString *postText = [self generatePostText:@"addPhone" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+    
+}
+
+
+//10.1添加Token
+- (void)addToken:(NSString *)token {
+    DataType actionType = DataTypeAddToken;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    [argsArray addObject:[self paramsDictionary: @"TOKEN" valueForKey:[NSString stringWithFormat:@"%@", token]]];
+    NSString *postText = [self generatePostText:@"addToken" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+
+//10.4用户针对推送的响应：
+- (void)pushResponse:(NSString *)pushId responseType:(NSString *)responseType itemType:(NSString *)itemType {
+    DataType actionType = DataTypePushResponse;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"PUSH_ID" valueForKey:[NSString stringWithFormat:@"%@", pushId]]];
+    [argsArray addObject:[self paramsDictionary: @"RESPONSE_TYPE" valueForKey:[NSString stringWithFormat:@"%@", responseType]]];
+    [argsArray addObject:[self paramsDictionary: @"ITEM_TYPE" valueForKey:[NSString stringWithFormat:@"%@", itemType]]];    
+    NSString *postText = [self generatePostText:@"pushResponse" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+//7.18签到
+- (void)userSignIn:(NSString *)uid mapX:(double)mapX mapY:(double)mapY {
+    DataType actionType = DataTypeUserSignIn;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", uid]]];
+    [argsArray addObject:[self paramsDictionary: @"MAPX" valueForKey:[NSString stringWithFormat:@"%f", mapX]]];
+    [argsArray addObject:[self paramsDictionary: @"MAPY" valueForKey:[NSString stringWithFormat:@"%f", mapY]]];
+    NSString *postText = [self generatePostText:@"userSignIn" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+//7.19 获取积分交易记录
+- (void)getUserIntegralItem:(NSString *)uid page:(int)beginPage {
+    DataType actionType = DataTypeGetUserIntegralItem;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:2];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", uid]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    NSString *postText = [self generatePostText:@"getUserIntegralItem" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+
+//7.20 获取积分帮助
+- (void)getIntegralHelp {
+    DataType actionType = DataTypeGetIntegralHelp;
+    
+    NSString *postText = [self generatePostText:@"getIntegralHelp" argsArray:nil];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+
+- (void)magSubscription:(int)magaType state:(int)state email:(NSString *)email name:(NSString *)name phone:(NSString *)phone address:(NSString *)address {
+    DataType actionType = DataTypeMagSubscription;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:7];
+    [argsArray addObject:[self paramsDictionary: @"MAG_TYPE" valueForKey:[NSString stringWithFormat:@"%d", magaType]]];
+    [argsArray addObject:[self paramsDictionary: @"STATE" valueForKey:[NSString stringWithFormat:@"%d", state]]];        
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"EMAIL" valueForKey:[NSString stringWithFormat:@"%@", email]]];
+    [argsArray addObject:[self paramsDictionary: @"NAME" valueForKey:[NSString stringWithFormat:@"%@", name]]];
+    [argsArray addObject:[self paramsDictionary: @"PHONENO" valueForKey:[NSString stringWithFormat:@"%@", phone]]];
+    [argsArray addObject:[self paramsDictionary: @"ADDRESS" valueForKey:[NSString stringWithFormat:@"%@", address]]];
+    NSString *postText = [self generatePostText:@"magSubscription" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+
+
+
+- (void)getKey {
+    DataType actionType = DataTypeGetKey;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    [argsArray addObject:[self paramsDictionary: @"KEY" valueForKey:@"getKeyABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678-_9+/"]];
+
+    
+    NSString *postText = [self generatePostText:@"getKey" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+//商场/品牌关注
+- (void)addAttention:(int)type aid:(NSString *)aid {
+    DataType actionType = DataTypeAddAttention;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"TYPE" valueForKey:[NSString stringWithFormat:@"%d", type]]];
+    [argsArray addObject:[self paramsDictionary: @"ID" valueForKey:[NSString stringWithFormat:@"%@", aid]]];
+    NSString *postText = [self generatePostText:@"attentionMAndB" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+//7.22 商场/品牌取消关注
+- (void)cancelAttention:(int)type aid:(NSString *)aid {
+    DataType actionType = DataTypeCancelAttention;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"TYPE" valueForKey:[NSString stringWithFormat:@"%d", type]]];
+    [argsArray addObject:[self paramsDictionary: @"ID" valueForKey:[NSString stringWithFormat:@"%@", aid]]];
+    NSString *postText = [self generatePostText:@"cancelAttentionMAndB" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+//7.23 获取关注列表
+- (void)getAttentionList:(int)type page:(int)beginPage {
+    DataType actionType = DataTypeGetAttentionList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"TYPE" valueForKey:[NSString stringWithFormat:@"%d", type]]];
+    [argsArray addObject:[self paramsDictionary: @"PAGE" valueForKey:[NSString stringWithFormat:@"%d", beginPage]]];
+    NSString *postText = [self generatePostText:@"getAttentionList" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+}
+
+
+//注销
+- (void)logout:(NSString *)uid {
+    DataType actionType = DataTypeLogout;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", uid]]];
+    NSString *postText = [self generatePostText:@"userLogout" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+
+
+//获取当前关注的活动列表
+- (void)attentionCouponList:(NSString *)uid {
+    DataType actionType = DataTypeAttentionCouponList;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:1];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", uid]]];
+    NSString *postText = [self generatePostText:@"attentionCouponList" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+
+//6.14优惠券添加passbook。
+- (void)getPassbook:(NSString *)couponId phone:(NSString *)phone {
+    DataType actionType = DataTypeGetPassbook;
+    
+    NSMutableArray *argsArray = [NSMutableArray arrayWithCapacity:3];
+    [argsArray addObject:[self paramsDictionary: @"UID" valueForKey:[NSString stringWithFormat:@"%@", [DataMgr getUid]]]];
+    [argsArray addObject:[self paramsDictionary: @"CID" valueForKey:[NSString stringWithFormat:@"%@", couponId]]];
+    [argsArray addObject:[self paramsDictionary: @"PHONE" valueForKey:[NSString stringWithFormat:@"%@", phone]]];
+    [argsArray addObject:[self paramsDictionary: @"CHANNEL" valueForKey:[NSString stringWithFormat:@"%@", @"PASSBOOK"]]];
+    NSString *postText = [self generatePostText:@"addPassBook" argsArray:argsArray];
+    
+	NSMutableArray *paramsArray = [NSMutableArray arrayWithCapacity:1];
+	[paramsArray addObject:[self paramsDictionary:kClient valueForKey:postText]];
+    [_http httpAction:paramsArray actionType:actionType];
+
+}
+
+
+
+
+//- (NSManagedObjectContext *)managedObjectContext {
+//	AppDelegate *appDelegate = (AppDelegate*)[[UIApplication sharedApplication] delegate];
+//	return [appDelegate managedObjectContext];
+//}
+
+#pragma mark Functions of DAL
+- (void)requestFinished:(ResponseData *)dataModel{
+    [_error reset];
+	ResponseData *data = [DataParser parse:dataModel];
+	[_dalDelegate responseDataFromServer:data];
+}
+
+- (void)requestFailed:(Error *)error{
+    [_error reset];
+    _error.no = error.no;
+    _error.message = error.message;
+    _error.dataType = error.dataType;
+    [_dalDelegate responseDataFailed:_error];
+}
+
+
+/*
+#pragma mark -
+#pragma mark 初始化
+//获取程序初始化数据kHttpRequestCardApiSystemInit
+- (Initialization *) initSystemData{
+    Initialization *initData = [[Initialization alloc] init];
+#if RESPONSE_DATA_CACHE_ENABLE
+	NSMutableArray *localCardList = [Store getStores:self.userId inContext:self.managedObjectContext];
+	if ([localCardList count]>0) {
+        initData.myCardList = localCardList;
+    }
+    NSArray *cityList = [City getCities:self.managedObjectContext];
+    if ([cityList count]>0) {
+        initData.cityList = cityList;
+    }
+#endif
+
+    
+    //组织参数GET /apis/rest?method=card_api_system_init[&tl={timeline}][&uid={uid}]
+	NSMutableArray *paramsArray = [[NSMutableArray alloc] initWithCapacity:2];
+//    NSString *tl = [DataUpdateTimeStamps getDataUpdateTimeStamp:kCardUpdateTS userId:self.userId inContext:self.managedObjectContext];
+//    [paramsArray addObject:[self paramsDictionary:@"tl" valueForKey:tl]];
+    [paramsArray addObject:[self paramsDictionary:@"cityid" valueForKey:[GlobalVariables sharedInstance].cityId]];
+    [paramsArray addObject:[self paramsDictionary:@"versionCode" valueForKey:kUniqueCode]];
+    
+    //通过网络从服务器获取数据
+    [beebookHttp httpAction:paramsArray actionType:HttpRequestCardApiSystemInit];
+    [paramsArray release];
+    
+    return [initData autorelease];
+}
+*/
+
+- (void)dealloc{
+    
+    [_http release];
+    _http = nil;
+    
+    [_error release];
+    _error = nil;
+    
+	[super dealloc];
+}
+
+
+@end

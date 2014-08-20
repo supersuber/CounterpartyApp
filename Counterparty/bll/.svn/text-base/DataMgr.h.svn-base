@@ -1,0 +1,121 @@
+//
+//  DataMgr.h
+//  AiShang
+//
+//  Created by ouyang on 12-5-28.
+//  Copyright (c) 2012年 onhand. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "AppDelegate.h"
+#import "User.h"
+
+@interface DataMgr : NSObject
+
++ (AppDelegate *)getAppDelegate;
+
++ (UINavigationController *)getCurrentNavigationController;
+
++ (UINavigationController *)getNavigationController;
+
++ (NSString *)getImei;
+
++ (NSString *)getPhoneNumber;
+
++ (void)savePhoneNumber:(NSString *)phone;
+
++ (NSString *)getLoginEmail;
+
++ (void)saveLoginEmail:(NSString *)email;
+
++ (double)getLat;
+
++ (double)getLon;
+
++ (void)saveLat:(double)lat;
+
++ (void)saveLon:(double)lon;
+
+
++ (NSString *)getUid;
+
++ (NSString *)getUserName;
+
++ (NSString *)getPassword;
+
++ (void)saveUid:(NSString *)uid;
+
++ (BOOL)isLogin;
+
++ (int)getLoginType;
+
++ (void)saveLogin:(int)loginType;//0未登录 1：手机登录  2：邮箱登录
+
++ (NSString *)getAddress;
+
++ (void)saveAddress:(NSString *)address;
+
++ (NSString *)getPassword;
+
++ (void)savePassword:(NSString *)password;
+
++ (NSString *)getDesKey;
+
++ (void)saveVip:(NSString *)vip;
+
++ (NSString *)getVip;
+
++ (NSString *)getJifen;
+
++ (void)saveJifen:(NSString *)jifen;
+
++ (NSString *)getRealName;
+
++ (void)saveRealName:(NSString *)realName;
+
++ (NSString *)getAddressTel;
+
++ (void)saveAddressTel:(NSString *)tel;
+
++ (User *)getUser;
+
++ (void)logout;
+
+
++ (BOOL)isShowPic;
+
++ (void)set3gSaveUp:(BOOL)saveup;
+
++ (int)get3gSaveUp;
+
++ (NSString*)getCurrentNet;
+
++ (BOOL)isSignInToday;
+
++ (void)saveSignIn;
+
++ (void)clearSignIn;
+
+
++ (BOOL)isEmagaCheck;
++ (void)saveEmagaCheck:(BOOL)check;
++ (NSString *)getMagaEmail;
++ (void)saveMagaEmail:(NSString *)email;
+
++ (BOOL)isRealMagaCheck;
++ (void)saveRealMagaCheck:(BOOL)check;
++ (NSString *)getMagaAddress;
++ (void)saveMagaAddress:(NSString *)address;
+
+
++ (BOOL)isAlertInMore;
++ (void)saveAlertInMore:(BOOL)alert;
+
++ (BOOL)isAlertInVip;
++ (void)saveAlertInVip:(BOOL)alert;
+
++ (int)getReadCount:(NSString *)activityId itemId:(NSString *)itemId;
+
++ (void)plusReadCount:(NSString *)activityId itemId:(NSString *)itemId;
+
+@end

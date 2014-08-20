@@ -1,0 +1,65 @@
+//
+//  DataParser.h
+//  CustomTabBar
+//
+//  Created by ori on 12-3-16.
+//  Copyright 2012 onhand. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "ResponseData.h"
+
+@interface DataParser : NSObject {
+    
+}
+
+
++ (ResponseData *)parse:(ResponseData *)data;
+
+#pragma mark- 本地优惠
++ (id)parseGetTuijianList:(NSDictionary *)jsonDictionary;
++ (id)parseGetAreaList:(NSDictionary *)jsonDictionary;
++ (id)parseGetAreaAndTypeList:(NSDictionary *)jsonDictionary;
++ (id)parseGetMerchantListByAreaAndType:(NSDictionary *)jsonDictionary;
++ (id)parseGetMerchantDetail:(NSDictionary *)jsonDictionary;
++ (id)parseGetMerchantCouponList:(NSDictionary *)jsonDictionary;
++ (id)parseGetCouponDetail:(NSDictionary *)jsonDictionary;
++ (id)parseGetAllBrands:(NSDictionary *)jsonDictionary;
++ (id)parseGetBrandById:(NSDictionary *)jsonDictionary;
++ (id)parseSearch:(NSDictionary *)jsonDictionary;
+
+#pragma mark- 附近
++ (id)parseGetLBSMerchantList:(NSDictionary *)jsonDictionary;
+
+#pragma mark- vip特权
++ (id)parseGetLimitList:(NSDictionary *)jsonDictionary;
++ (id)parseGetLimitById:(NSDictionary *)jsonDictionary;
++ (id)parseLimitApply:(NSDictionary *)jsonDictionary;
++ (id)parseLimit:(NSDictionary *)jsonDictionary;
++ (id)parseGetCouponInfoList:(NSDictionary *)jsonDictionary;
++ (id)parseGetCouponInfoDetail:(NSDictionary *)jsonDictionary;
++ (id)parseDownCouponInfo:(NSDictionary *)jsonDictionary;
++ (id)parseGetGiftList:(NSDictionary *)jsonDictionary;
++ (id)parseGetGiftDetail:(NSDictionary *)jsonDictionary;
++ (id)parseGift:(NSDictionary *)jsonDictionary;
+
+#pragma mark- 我的爱尚
++ (id)parseUserLogin:(NSDictionary *)jsonDictionary;
++ (id)parseGetRegCode:(NSDictionary *)jsonDictionary;
++ (id)parseUserReg:(NSDictionary *)jsonDictionary;
++ (id)parseGetBackPwd1:(NSDictionary *)jsonDictionary;
++ (id)parseGetBackPwd2:(NSDictionary *)jsonDictionary;
++ (id)parseGetLimistListByUser:(NSDictionary *)jsonDictionary;
++ (id)parseGetCouponListByUser:(NSDictionary *)jsonDictionary;
++ (id)parseGetGiftListByUser:(NSDictionary *)jsonDictionary;
++ (id)parseEditAndDeleteAddress:(NSDictionary *)jsonDictionary;
++ (id)parseSendFeedback:(NSDictionary *)jsonDictionary;
++ (id)parseGetFeedbackList:(NSDictionary *)jsonDictionary;
++ (id)parseCheckVersion:(NSDictionary *)jsonDictionary;
+
++ (id)parseGetUserIntegralItem:(NSDictionary *)jsonDictionary;
++ (id)parseGetAttentionList:(NSDictionary *)jsonDictionary;
++ (id)parseAttentionCouponList:(NSDictionary *)jsonDictionary;
+
+
+@end

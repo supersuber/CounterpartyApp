@@ -1,0 +1,125 @@
+//
+//  FakeDataUtil.m
+//  CustomTabBar
+//
+//  Created by ori on 12-3-12.
+//  Copyright 2012 onhand. All rights reserved.
+//
+
+#import "FakeDataUtil.h"
+
+
+
+@implementation FakeDataUtil
+
++ (NSMutableArray *)buildCityList {
+	NSMutableArray *cityList = [NSMutableArray arrayWithCapacity:10];
+	
+//	for (int i = 0; i < 10; i++) {
+//		if (i == 0) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"1";
+//			tCity._cityName = @"北京市";
+//			tCity._code = @"010";
+//			tCity._spell = @"beijing";
+//			tCity._firstLetter = @"BJ";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 1) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"2";
+//			tCity._cityName = @"上海市";
+//			tCity._code = @"021";
+//			tCity._spell = @"shanghai";
+//			tCity._firstLetter = @"SH";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 2) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"3";
+//			tCity._cityName = @"天津市";
+//			tCity._code = @"022";
+//			tCity._spell = @"tianjin";
+//			tCity._firstLetter = @"TJ";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 3) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"4";
+//			tCity._cityName = @"重庆市";
+//			tCity._code = @"023";
+//			tCity._spell = @"chongqing";
+//			tCity._firstLetter = @"CQ";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 4) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"5";
+//			tCity._cityName = @"深圳市";
+//			tCity._code = @"000";
+//			tCity._spell = @"shenzhen";
+//			tCity._firstLetter = @"SZ";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 5) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"6";
+//			tCity._cityName = @"广州市";
+//			tCity._code = @"000";
+//			tCity._spell = @"guangzhou";
+//			tCity._firstLetter = @"GZ";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 6) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"7";
+//			tCity._cityName = @"长沙市";
+//			tCity._code = @"0731";
+//			tCity._spell = @"changsha";
+//			tCity._firstLetter = @"CS";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 7) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"8";
+//			tCity._cityName = @"西安市";
+//			tCity._code = @"029";
+//			tCity._spell = @"xian";
+//			tCity._firstLetter = @"XA";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 8) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"9";
+//			tCity._cityName = @"青岛市";
+//			tCity._code = @"000";
+//			tCity._spell = @"qingdao";
+//			tCity._firstLetter = @"QD";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//		if (i == 9) {
+//			City* tCity = [[City alloc] init];
+//			tCity._cityCode = @"10";
+//			tCity._cityName = @"昆明市";
+//			tCity._code = @"000";
+//			tCity._spell = @"kunming";
+//			tCity._firstLetter = @"KM";
+//			[cityList addObject:tCity];
+//			[tCity release];
+//		}
+//	}
+//	
+	return cityList;
+	
+}
+
+@end

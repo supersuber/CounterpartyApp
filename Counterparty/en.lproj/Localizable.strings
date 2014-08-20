@@ -1,0 +1,43 @@
+/* 
+  Localizable.strings
+  Counterparty
+
+  Created by ouyang on 14-7-26.
+  Copyright (c) 2014年 ori. All rights reserved.
+*/
+"Home"="Home";
+"Orders"="Orders";
+"Assets"="Assets";
+"AssetInfo"="Asset Info";
+"Burns"="Burns";
+"More"="More";
+"Counterparty"="Counterparty";
+"XCP"="XCP";
+"Address"="Address";
+"AllLoaded"="All loaded!";
+"PullDownToRefresh"="Pull down to refresh...";
+"ReleaseToRefresh"="Release to refresh...";
+"Refresh"="Refresh...";
+"PullUpToGetMore"="Pull up to get more...";
+"LoosenToGetMore"="Loosen to get more...";
+"Updating"="Updating...";
+"LastUpdated"="Last updated";
+"AllContentHasBeenDisplayed"="All content has been displayed";
+"Loading"="Loading...";
+"Balance"="Balance";
+"TotalCredits"="Total Credits";
+"TransactionsNo"="No. Of Transactions";
+"LatestVersion"="The latest version";
+"NoUpdate"="already using the latest version!";
+"Cancel"="Cancel";
+"Update"="Update";
+"AboutUs"="About Us";
+"Transactions"="Transactions";
+"Broadcasts"="Broadcasts";
+"AddressBalance"="Balance";
+"UserNotSet"="User not set";
+"VersionUpdate"="Version Update";
+"Agreement"="Agreement";
+"ContactUs"="Contact Us:";
+"CounterpartyDesc"="Counterparty is an innovative platform for peer-to-peer markets and financial instruments. ";
+
